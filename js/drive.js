@@ -6,12 +6,28 @@
 
 export const GOOGLE_CLIENT_ID = "49504779196-gi4m2atmjnemvg2sa6inbutc6f5cu4i4.apps.googleusercontent.com";
 
+// ID del file soci su Google Drive: una volta creato il file "canonico"
+// (pulsante "Crea nuovo file su Drive", da fare una volta sola), incolla qui
+// il suo ID. Da quel momento l'app si collega SEMPRE automaticamente a
+// questo file per chiunque acceda, senza bisogno di "Connetti a file
+// esistente". Lascia vuoto per il comportamento precedente (file scelto
+// manualmente, salvato solo nel browser di chi lo collega).
+export const DRIVE_FILE_ID = "";
+
+// Se impostata, la scheda "Impostazioni / Sync" (connessione Drive,
+// importazione dati, anno sociale, backup) e' visibile solo a questo
+// indirizzo email Google. Lascia vuoto per renderla visibile a tutti.
+export const ADMIN_EMAIL = "alessiorimensi@gmail.com";
+
 // Scope "drive" completo: scelto per semplicita' (nessuna integrazione del
 // Picker API necessaria). Con questo scope, chiunque acceda con un account
 // Google autorizzato nella schermata di consenso OAuth (vedi README) puo'
 // leggere/scrivere qualunque file di Drive a cui quell'account ha accesso,
 // incluso il file soci condiviso dagli altri componenti del gruppo.
-const SCOPE = "https://www.googleapis.com/auth/drive";
+// "email" e' uno scope non sensibile aggiunto solo per riconoscere
+// l'amministratore (ADMIN_EMAIL sopra): non richiede alcuna verifica
+// aggiuntiva da parte di Google.
+const SCOPE = "https://www.googleapis.com/auth/drive email";
 
 const DRIVE_FILE_ID_KEY = "gap-drive-file-id";
 const DRIVE_LAST_SYNC_KEY = "gap-drive-last-sync-modified-time";
@@ -25,6 +41,7 @@ export function isSignedIn() {
 }
 
 export function getStoredFileId() {
+  if (DRIVE_FILE_ID) return DRIVE_FILE_ID;
   return localStorage.getItem(DRIVE_FILE_ID_KEY) || "";
 }
 
@@ -91,6 +108,16 @@ export function signOut() {
 function authHeaders() {
   if (!accessToken) throw new Error("Non autenticato con Google");
   return { Authorization: "Bearer " + accessToken };
+}
+
+/** Email dell'account Google attualmente collegato (richiede lo scope "email"). */
+export async function getUserEmail() {
+  const res = await fetch("https://www.googleapis.com/oauth2/v3/userinfo", {
+    headers: authHeaders(),
+  });
+  if (!res.ok) return "";
+  const data = await res.json();
+  return data.email || "";
 }
 
 export function extractFileId(idOrUrl) {
