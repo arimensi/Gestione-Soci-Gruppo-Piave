@@ -14,20 +14,22 @@
     <span class="subtitle">Gestione soci</span>
   </div>
   <div class="sync-status" id="syncStatus">
+    <button id="btnEstrazioneAssicurazione" class="btn btn-small">Estrazione per assicurazione</button>
     <span id="syncStatusText" class="sync-text sync-offline">Non connesso a Google Drive</span>
     <button id="btnSyncNow" class="btn btn-small" hidden>Salva su Drive</button>
   </div>
 </header>
 
 <nav class="tabs" id="tabs">
-  <button class="tab-btn active" data-tab="storico">Storico soci</button>
+  <button class="tab-btn active" data-tab="storico">Lista soci</button>
   <button class="tab-btn" data-tab="attivi">Soci attivi <span id="attiviCountBadge" class="badge">0/90</span></button>
-  <button class="tab-btn" data-tab="impostazioni">Impostazioni / Sync</button>
+  <button class="tab-btn" data-tab="storicoattivi">Storico soci attivi</button>
+  <button class="tab-btn" data-tab="impostazioni" id="tabBtnImpostazioni">Accedi</button>
 </nav>
 
 <main>
 
-  <!-- ===================== TAB: STORICO ===================== -->
+  <!-- ===================== TAB: LISTA SOCI (anagrafica) ===================== -->
   <section id="tab-storico" class="tab-panel active">
     <div class="toolbar">
       <input type="search" id="storicoSearch" placeholder="Cerca per nome, tessera, indirizzo..." class="search-box">
@@ -62,12 +64,12 @@
     </div>
   </section>
 
-  <!-- ===================== TAB: ATTIVI ===================== -->
+  <!-- ===================== TAB: SOCI ATTIVI (anno corrente) ===================== -->
   <section id="tab-attivi" class="tab-panel">
     <div class="toolbar">
       <input type="search" id="attiviSearch" placeholder="Cerca tra i soci attivi..." class="search-box">
       <button id="btnAggiungiAttivo" class="btn btn-primary">+ Aggiungi socio dallo storico</button>
-      <button id="btnNuovoAnno" class="btn btn-danger-outline">Avvia nuovo anno (svuota attivi)</button>
+      <button id="btnNuovoAnno" class="btn btn-danger-outline">Chiudi anno</button>
       <span class="result-count" id="attiviCount"></span>
     </div>
     <p class="hint" id="limiteSociHint"></p>
@@ -75,9 +77,11 @@
       <table id="tableAttivi" class="data-table">
         <thead>
           <tr>
+            <th data-col="id">ID</th>
             <th data-col="tessera">Tessera</th>
             <th data-col="nominativo">Socio</th>
             <th data-col="eta">Età</th>
+            <th data-col="indirizzo">Indirizzo</th>
             <th data-col="email">e-Mail</th>
             <th data-col="telefono">Telefono</th>
             <th data-col="anzianita">Anz.</th>
@@ -93,7 +97,37 @@
     </div>
   </section>
 
-  <!-- ===================== TAB: IMPOSTAZIONI ===================== -->
+  <!-- ===================== TAB: STORICO SOCI ATTIVI (anni passati) ===================== -->
+  <section id="tab-storicoattivi" class="tab-panel">
+    <div class="toolbar">
+      <select id="storicoAttiviAnno" class="select"></select>
+      <input type="search" id="storicoAttiviSearch" placeholder="Cerca tra i soci di quell'anno..." class="search-box">
+      <span class="result-count" id="storicoAttiviCount"></span>
+    </div>
+    <p class="hint" id="storicoAttiviHint"></p>
+    <div class="table-wrap">
+      <table id="tableStoricoAttivi" class="data-table">
+        <thead>
+          <tr>
+            <th>ID</th>
+            <th>Tessera</th>
+            <th>Socio</th>
+            <th>Anno nascita</th>
+            <th>Indirizzo</th>
+            <th>e-Mail</th>
+            <th>Telefono</th>
+            <th>Quota</th>
+            <th>Bonifico</th>
+            <th>Pagata</th>
+            <th>Ricevuta</th>
+          </tr>
+        </thead>
+        <tbody id="storicoAttiviBody"></tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ===================== TAB: IMPOSTAZIONI / ACCEDI ===================== -->
   <section id="tab-impostazioni" class="tab-panel">
     <div class="settings-grid">
 
