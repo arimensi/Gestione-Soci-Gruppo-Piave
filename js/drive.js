@@ -12,7 +12,7 @@ export const GOOGLE_CLIENT_ID = "223079985709-imr1aidpeoc3cmh1p3m4iv6ast93fbes.a
 // questo file per chiunque acceda, senza bisogno di "Connetti a file
 // esistente". Lascia vuoto per il comportamento precedente (file scelto
 // manualmente, salvato solo nel browser di chi lo collega).
-export const DRIVE_FILE_ID = "1hn8nQxBPg9K5-8xM7RhXuP6437hCc5Mo";
+export const DRIVE_FILE_ID = "1_zJSxSsA-nfg_VnjsskauJOHqj1Iwzlo";
 
 // Se impostata, la scheda "Impostazioni / Sync" (connessione Drive,
 // importazione dati, anno sociale, backup) e' visibile solo a questo
