@@ -390,9 +390,9 @@ document.getElementById("btnNuovoAnno").addEventListener("click", () => {
   toast(`Soci attivi azzerati per l'anno ${annoCorrente()}`);
 });
 
-// ===================== EXPORT CSV / BACKUP =====================
-document.getElementById("btnExportCsv").addEventListener("click", () => {
-  const columns = [
+// ===================== EXPORT CSV / EXCEL / PDF / BACKUP =====================
+function storicoColumns() {
+  return [
     { label: "Tessera", value: (s) => s.tessera },
     { label: "Socio", value: (s) => s.nominativo },
     { label: "Eta", value: (s) => calcolaEta(s.dataNascita) },
@@ -407,7 +407,100 @@ document.getElementById("btnExportCsv").addEventListener("click", () => {
     { label: "Quota", value: (s) => s.quota },
     { label: "Note", value: (s) => s.note },
   ];
-  exportCsv(filteredStorico(), columns);
+}
+
+function attiviColumns() {
+  return [
+    { label: "Tessera", value: (s) => s.tessera },
+    { label: "Socio", value: (s) => s.nominativo },
+    { label: "Eta", value: (s) => calcolaEta(s.dataNascita) },
+    { label: "e-Mail", value: (s) => s.email },
+    { label: "Telefono", value: (s) => s.telefono },
+    { label: "Anzianita", value: (s) => calcolaAnzianita(s.dataEntrata) },
+    { label: "Quota", value: (s) => s.quota },
+    { label: "Bonifico", value: (s) => (s.pagamentoBonifico ? "si" : "no") },
+    { label: "Quota pagata", value: (s) => (s.quotaPagata ? "si" : "no") },
+    { label: "Ricevuta consegnata", value: (s) => (s.ricevutaConsegnata ? "si" : "no") },
+  ];
+}
+
+// --- Excel: libreria SheetJS caricata al volo solo al primo utilizzo ---
+let xlsxLoadPromise = null;
+function loadXlsxLib() {
+  if (window.XLSX) return Promise.resolve();
+  if (xlsxLoadPromise) return xlsxLoadPromise;
+  xlsxLoadPromise = new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = "https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js";
+    script.onload = () => resolve();
+    script.onerror = () => reject(new Error("Impossibile caricare la libreria Excel"));
+    document.head.appendChild(script);
+  });
+  return xlsxLoadPromise;
+}
+
+async function exportXlsx(rows, columns, filenamePrefix) {
+  await loadXlsxLib();
+  const data = rows.map((r) => {
+    const obj = {};
+    columns.forEach((c) => {
+      const v = c.value(r);
+      obj[c.label] = v === null || v === undefined ? "" : v;
+    });
+    return obj;
+  });
+  const ws = XLSX.utils.json_to_sheet(data);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Soci");
+  XLSX.writeFile(wb, `${filenamePrefix}-${new Date().toISOString().slice(0, 10)}.xlsx`);
+}
+
+// --- PDF: nessuna libreria, si appoggia alla stampa nativa del browser ---
+function exportPdf(rows, columns, titolo) {
+  const win = window.open("", "_blank");
+  if (!win) {
+    toast("Il browser ha bloccato l'apertura della finestra di stampa", "error");
+    return;
+  }
+  win.opener = null;
+  const headCells = columns.map((c) => `<th>${escapeHtml(c.label)}</th>`).join("");
+  const bodyRows = rows
+    .map((r) => {
+      const cells = columns
+        .map((c) => {
+          const v = c.value(r);
+          return `<td>${escapeHtml(v === null || v === undefined ? "" : v)}</td>`;
+        })
+        .join("");
+      return `<tr>${cells}</tr>`;
+    })
+    .join("");
+  const html = `<!DOCTYPE html>
+<html lang="it"><head><meta charset="UTF-8"><title>${escapeHtml(titolo)}</title>
+<style>
+  body{font-family:Arial,Helvetica,sans-serif;font-size:11px;margin:20px;color:#222;}
+  h1{font-size:16px;margin-bottom:2px;}
+  p{margin-top:0;color:#555;font-size:11px;}
+  table{width:100%;border-collapse:collapse;margin-top:12px;}
+  th,td{border:1px solid #ccc;padding:4px 6px;text-align:left;}
+  th{background:#e8f1f8;}
+  tr:nth-child(even){background:#f7f8fa;}
+  @media print{ @page{ size: landscape; margin: 10mm; } }
+</style></head>
+<body>
+  <h1>${escapeHtml(titolo)}</h1>
+  <p>Gruppo Aeromodellistico Piave &middot; generato il ${new Date().toLocaleDateString("it-IT")} &middot; ${rows.length} soci</p>
+  <table><thead><tr>${headCells}</tr></thead><tbody>${bodyRows}</tbody></table>
+</body></html>`;
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  win.focus();
+  setTimeout(() => win.print(), 300);
+}
+
+document.getElementById("btnExportCsv").addEventListener("click", () => {
+  exportCsv(filteredStorico(), storicoColumns());
   toast("CSV esportato");
 });
 
@@ -415,6 +508,45 @@ document.getElementById("btnScaricaBackup").addEventListener("click", () => {
   downloadJsonBackup();
   toast("Backup scaricato");
 });
+
+function aggiungiPulsantiExport(risultatoId, rowsGetter, columnsGetter, filePrefix, titoloPdf) {
+  const anchor = document.getElementById(risultatoId);
+  const btnXlsx = document.createElement("button");
+  btnXlsx.className = "btn";
+  btnXlsx.textContent = "Esporta Excel";
+  btnXlsx.addEventListener("click", async () => {
+    try {
+      await exportXlsx(rowsGetter(), columnsGetter(), filePrefix);
+      toast("Excel esportato");
+    } catch (err) {
+      console.error(err);
+      toast("Errore nell'esportazione Excel: " + err.message, "error");
+    }
+  });
+  const btnPdf = document.createElement("button");
+  btnPdf.className = "btn";
+  btnPdf.textContent = "Esporta PDF";
+  btnPdf.addEventListener("click", () => {
+    exportPdf(rowsGetter(), columnsGetter(), titoloPdf);
+  });
+  anchor.insertAdjacentElement("beforebegin", btnXlsx);
+  anchor.insertAdjacentElement("beforebegin", btnPdf);
+}
+
+aggiungiPulsantiExport(
+  "storicoCount",
+  filteredStorico,
+  storicoColumns,
+  "soci-storico-gruppo-piave",
+  "Storico soci - Gruppo Aeromodellistico Piave"
+);
+aggiungiPulsantiExport(
+  "attiviCount",
+  filteredAttivi,
+  attiviColumns,
+  "soci-attivi-gruppo-piave",
+  `Soci attivi ${annoCorrente()} - Gruppo Aeromodellistico Piave`
+);
 
 // ===================== IMPOSTAZIONI: ANNO / LIMITE =====================
 document.getElementById("btnSalvaImpostazioniAnno").addEventListener("click", () => {
@@ -611,8 +743,6 @@ function renderGoogleSigninArea() {
     btn.textContent = "Disconnetti account Google";
     btn.addEventListener("click", () => {
       Drive.signOut();
-      // Svuota i dati visualizzati/salvati in locale: da disconnessi non
-      // deve restare visibile nulla che possa sembrare "dato corrente".
       const vuoto = datiVuoti();
       setData(vuoto.meta, vuoto.soci);
       clearDirty();
@@ -713,10 +843,6 @@ function initGoogleWhenReady() {
 }
 
 function main() {
-  // Non si ricarica la cache locale all'avvio: finche' non si fa di nuovo
-  // accesso con Google, l'app parte vuota (niente dati "vecchi" visibili da
-  // disconnessi, es. dopo un refresh della pagina - l'accesso Google non
-  // sopravvive al ricaricamento).
   syncInputsFromState();
   renderAll();
   updateSyncStatusUI();
