@@ -103,7 +103,13 @@ export function exportCsv(rows, columns) {
       .map((c) => {
         let v = c.value(r);
         if (v === null || v === undefined) v = "";
-        v = String(v).replace(/"/g, '""');
+        v = String(v);
+        // Protezione da "CSV injection": se il valore inizia con uno di
+        // questi caratteri, Excel/Sheets potrebbe interpretarlo come una
+        // formula quando il file viene aperto. Prefisso con un apice per
+        // forzarne la lettura come testo semplice.
+        if (/^[=+\-@]/.test(v)) v = "'" + v;
+        v = v.replace(/"/g, '""');
         if (v.includes(";") || v.includes("\n") || v.includes('"')) v = `"${v}"`;
         return v;
       })
