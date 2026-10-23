@@ -3,19 +3,26 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Soci - Gruppo Aeromodellistico Piave</title>
+<title>Soci - Gruppo Piave</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <header class="topbar">
   <div class="topbar-title">
-    <h1>Gruppo Aeromodellistico Piave</h1>
-    <span class="subtitle">Gestione soci</span>
+    <img src="assets/logo-gruppo-piave.png" alt="Logo Gruppo Piave" class="logo-img">
+    <div>
+      <h1>Gruppo Piave</h1>
+      <span class="subtitle">Gestione soci</span>
+    </div>
   </div>
   <div class="sync-status" id="syncStatus">
     <span id="syncStatusText" class="sync-text sync-offline">Non connesso a Google Drive</span>
     <button id="tabBtnImpostazioni" class="tab-btn" data-tab="impostazioni">Accedi</button>
+    <div id="floatingActions" class="floating-actions">
+      <button id="btnEstrazioneAssicurazione" class="btn btn-small">Estrazione per assicurazione</button>
+      <button id="btnSyncNow" class="btn btn-small btn-primary" hidden>Salva su Drive</button>
+    </div>
   </div>
 </header>
 
@@ -272,11 +279,6 @@
       </div>
     </div>
   </div>
-</div>
-
-<div id="floatingActions" class="floating-actions">
-  <button id="btnEstrazioneAssicurazione" class="btn btn-small">Estrazione per assicurazione</button>
-  <button id="btnSyncNow" class="btn btn-small btn-primary" hidden>Salva su Drive</button>
 </div>
 
 <div id="toast" class="toast" hidden></div>
