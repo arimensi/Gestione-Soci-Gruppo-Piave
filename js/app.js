@@ -567,7 +567,7 @@ async function exportXlsx(rows, columns, filenamePrefix) {
 }
 
 // --- PDF: nessuna libreria, si appoggia alla stampa nativa del browser ---
-function exportPdf(rows, columns, titolo) {
+function exportPdf(rows, columns, titolo, totali) {
   const win = window.open("", "_blank");
   if (!win) {
     toast("Il browser ha bloccato l'apertura della finestra di stampa", "error");
@@ -586,6 +586,9 @@ function exportPdf(rows, columns, titolo) {
       return `<tr>${cells}</tr>`;
     })
     .join("");
+  const footerHtml = totali
+    ? `<tfoot><tr><td colspan="${columns.length - 1}">${escapeHtml(totali.label)}</td><td>${escapeHtml(totali.value)}</td></tr></tfoot>`
+    : "";
   const html = `<!DOCTYPE html>
 <html lang="it"><head><meta charset="UTF-8"><title>${escapeHtml(titolo)}</title>
 <style>
@@ -596,12 +599,13 @@ function exportPdf(rows, columns, titolo) {
   th,td{border:1px solid #ccc;padding:4px 6px;text-align:left;}
   th{background:#e8f1f8;}
   tr:nth-child(even){background:#f7f8fa;}
+  tfoot td{font-weight:bold;background:#e8f1f8;}
   @media print{ @page{ size: landscape; margin: 10mm; } }
 </style></head>
 <body>
   <h1>${escapeHtml(titolo)}</h1>
   <p>Gruppo Aeromodellistico Piave &middot; generato il ${new Date().toLocaleDateString("it-IT")} &middot; ${rows.length} soci</p>
-  <table><thead><tr>${headCells}</tr></thead><tbody>${bodyRows}</tbody></table>
+  <table><thead><tr>${headCells}</tr></thead><tbody>${bodyRows}</tbody>${footerHtml}</table>
 </body></html>`;
   win.document.open();
   win.document.write(html);
@@ -620,7 +624,7 @@ document.getElementById("btnScaricaBackup").addEventListener("click", () => {
   toast("Backup scaricato");
 });
 
-function aggiungiPulsantiExport(risultatoId, rowsGetter, columnsGetter, filePrefix, titoloPdf) {
+function aggiungiPulsantiExport(risultatoId, rowsGetter, columnsGetter, filePrefix, titoloPdf, totaliPdf) {
   const anchor = document.getElementById(risultatoId);
   const btnXlsx = document.createElement("button");
   btnXlsx.className = "btn";
@@ -638,7 +642,10 @@ function aggiungiPulsantiExport(risultatoId, rowsGetter, columnsGetter, filePref
   btnPdf.className = "btn";
   btnPdf.textContent = "Esporta PDF";
   btnPdf.addEventListener("click", () => {
-    exportPdf(rowsGetter(), columnsGetter(), titoloPdf);
+    const titolo = typeof titoloPdf === "function" ? titoloPdf() : titoloPdf;
+    const rows = rowsGetter();
+    const totali = totaliPdf ? totaliPdf(rows) : null;
+    exportPdf(rows, columnsGetter(), titolo, totali);
   });
   anchor.insertAdjacentElement("beforebegin", btnXlsx);
   anchor.insertAdjacentElement("beforebegin", btnPdf);
@@ -656,7 +663,11 @@ aggiungiPulsantiExport(
   filteredAttivi,
   attiviColumns,
   "soci-attivi-gruppo-piave",
-  () => `Soci attivi ${state.meta.annoAttivo} - Gruppo Aeromodellistico Piave`
+  () => `Soci attivi ${state.meta.annoAttivo} - Gruppo Aeromodellistico Piave`,
+  (rows) => ({
+    label: "Totale quote incassate",
+    value: "€ " + rows.reduce((sum, s) => sum + (Number(s.quota) || 0), 0).toFixed(2),
+  })
 );
 
 // --- Estrazione per assicurazione: PDF a formato fisso, sempre ordinato per nome ---
