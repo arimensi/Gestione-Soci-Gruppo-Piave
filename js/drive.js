@@ -19,11 +19,13 @@ export const DRIVE_FILE_ID = "1_zJSxSsA-nfg_VnjsskauJOHqj1Iwzlo";
 // indirizzo email Google. Lascia vuoto per renderla visibile a tutti.
 export const ADMIN_EMAIL = "gruppopiave.internal@gmail.com";
 
-// Scope "drive" completo: scelto per semplicita' (nessuna integrazione del
-// Picker API necessaria). Con questo scope, chiunque acceda con un account
-// Google autorizzato nella schermata di consenso OAuth (vedi README) puo'
-// leggere/scrivere qualunque file di Drive a cui quell'account ha accesso,
-// incluso il file soci condiviso dagli altri componenti del gruppo.
+// Scope "drive" completo: necessario perche' l'app si collega tramite un
+// ID file incollato a mano (non tramite il selettore ufficiale di Google),
+// quindi serve poter leggere/scrivere qualsiasi file condiviso con
+// l'account collegato, non solo quelli creati dall'app stessa. Il rischio
+// (accesso teorico a tutto il Drive dell'account collegato) va mitigato
+// usando un account Google dedicato al gruppo, separato da quello personale
+// dell'amministratore - mai l'account Gmail personale di qualcuno.
 // "email" e' uno scope non sensibile aggiunto solo per riconoscere
 // l'amministratore (ADMIN_EMAIL sopra): non richiede alcuna verifica
 // aggiuntiva da parte di Google.
