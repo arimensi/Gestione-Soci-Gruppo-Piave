@@ -41,14 +41,20 @@ function toast(msg, type = "") {
 }
 
 // ===================== TABS =====================
+// Scheda unica per lo switch, richiamata sia dalla barra schede (Lista soci /
+// Soci attivi / Storico soci attivi) sia dal pulsante Accedi/Impostazioni,
+// che ora vive nell'intestazione in alto a destra e non e' piu' dentro #tabs.
+function switchTab(tab) {
+  document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b.dataset.tab === tab));
+  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("active", p.id === "tab-" + tab));
+  if (tab === "storicoattivi") renderStoricoAttivi();
+}
 document.getElementById("tabs").addEventListener("click", (e) => {
   const btn = e.target.closest(".tab-btn");
   if (!btn) return;
-  document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b === btn));
-  const tab = btn.dataset.tab;
-  document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("active", p.id === "tab-" + tab));
-  if (tab === "storicoattivi") renderStoricoAttivi();
+  switchTab(btn.dataset.tab);
 });
+document.getElementById("tabBtnImpostazioni").addEventListener("click", () => switchTab("impostazioni"));
 
 // ===================== NOTE DINAMICHE (tessera duplicata si auto-risolve) =====================
 // Il testo "tessera duplicata" importato dai PDF storici restava scritto per
@@ -163,22 +169,19 @@ function renderAttivi() {
   const body = document.getElementById("attiviBody");
   body.innerHTML = list
     .map((s, idx) => {
-      const eta = calcolaEta(s.dataNascita);
-      const anz = calcolaAnzianita(s.dataEntrata);
       const check = (v) => (v ? '<span class="check-yes">&check;</span>' : '<span class="check-no">—</span>');
       return `<tr data-id="${s.id}">
         <td>${idx + 1}</td>
         <td>${escapeHtml(s.tessera)}</td>
         <td>${escapeHtml(s.nominativo)}</td>
-        <td>${eta ?? ""}</td>
+        <td>${formatDataIt(s.dataNascita)}</td>
         <td>${escapeHtml(s.indirizzo)}</td>
         <td>${escapeHtml(s.email)}</td>
         <td>${escapeHtml(s.telefono)}</td>
-        <td>${anz ?? ""}</td>
-        <td>${s.quota != null ? "€ " + Number(s.quota).toFixed(2) : ""}</td>
         <td>${check(s.pagamentoBonifico)}</td>
         <td>${check(s.quotaPagata)}</td>
         <td>${check(s.ricevutaConsegnata)}</td>
+        <td>${s.quota != null ? "€ " + Number(s.quota).toFixed(2) : ""}</td>
         <td class="col-actions">
           <button class="btn btn-small btn-edit">Modifica</button>
           <button class="btn btn-small btn-danger-outline btn-rimuovi">Rimuovi</button>
@@ -188,6 +191,8 @@ function renderAttivi() {
     .join("");
   document.getElementById("attiviCount").textContent = `${list.length} di ${contaAttivi()} soci attivi`;
   updateSortHeaders(document.getElementById("tableAttivi"), attiviState.sort);
+  document.getElementById("attiviTotaleQuota").textContent =
+    "€ " + list.reduce((sum, s) => sum + (Number(s.quota) || 0), 0).toFixed(2);
 
   const totale = contaAttivi();
   const limite = state.meta.limiteSoci || 90;
@@ -233,6 +238,7 @@ function renderStoricoAttivi() {
   if (!archivio) {
     body.innerHTML = "";
     document.getElementById("storicoAttiviCount").textContent = "";
+    document.getElementById("storicoAttiviTotaleQuota").textContent = "";
     hint.textContent =
       state.storicoAttivi.length === 0
         ? "Nessun anno ancora archiviato: usa \"Chiudi anno\" nella scheda Soci attivi quando un anno sociale si conclude."
@@ -252,18 +258,20 @@ function renderStoricoAttivi() {
         <td>${idx + 1}</td>
         <td>${escapeHtml(s.tessera)}</td>
         <td>${escapeHtml(s.nominativo)}</td>
-        <td>${escapeHtml(annoNascita(s.dataNascita))}</td>
+        <td>${formatDataIt(s.dataNascita)}</td>
         <td>${escapeHtml(s.indirizzo)}</td>
         <td>${escapeHtml(s.email)}</td>
         <td>${escapeHtml(s.telefono)}</td>
-        <td>${s.quota != null ? "€ " + Number(s.quota).toFixed(2) : ""}</td>
         <td>${check(s.pagamentoBonifico)}</td>
         <td>${check(s.quotaPagata)}</td>
         <td>${check(s.ricevutaConsegnata)}</td>
+        <td>${s.quota != null ? "€ " + Number(s.quota).toFixed(2) : ""}</td>
       </tr>`;
     })
     .join("");
   document.getElementById("storicoAttiviCount").textContent = `${list.length} di ${archivio.soci.length} soci (anno ${archivio.anno})`;
+  document.getElementById("storicoAttiviTotaleQuota").textContent =
+    "€ " + list.reduce((sum, s) => sum + (Number(s.quota) || 0), 0).toFixed(2);
   updateSortHeaders(document.getElementById("tableStoricoAttivi"), storicoAttiviState.sort);
 }
 
@@ -295,6 +303,7 @@ function wireSorting(tableId, sortStateObj, renderFn) {
 }
 wireSorting("tableStorico", storicoState, renderStorico);
 wireSorting("tableAttivi", attiviState, renderAttivi);
+wireSorting("tableStoricoAttivi", storicoAttiviState, renderStoricoAttivi);
 
 document.getElementById("storicoSearch").addEventListener("input", (e) => {
   storicoState.search = e.target.value;
@@ -327,7 +336,7 @@ document.getElementById("attiviBody").addEventListener("click", (e) => {
       toast("Socio rimosso dagli attivi");
     }
   } else if (e.target.closest(".btn-edit") || !e.target.closest(".col-actions")) {
-    openModalSocio(id);
+    openModalSocio(id, "attivi");
   }
 });
 
@@ -341,7 +350,7 @@ function renderAll() {
 const modalSocio = document.getElementById("modalSocio");
 const formSocio = document.getElementById("formSocio");
 
-function openModalSocio(id) {
+function openModalSocio(id, context = "storico") {
   const s = id ? state.soci.find((x) => x.id === id) : null;
   document.getElementById("modalSocioTitle").textContent = s ? "Modifica socio" : "Nuovo socio";
   document.getElementById("fId").value = s ? s.id : "";
@@ -360,6 +369,12 @@ function openModalSocio(id) {
   document.getElementById("fRicevutaConsegnata").checked = !!s?.ricevutaConsegnata;
   document.getElementById("fNote").value = s?.note || "";
   document.getElementById("btnEliminaSocio").hidden = !s;
+  // I campi relativi a contatti/pagamento si vedono solo aprendo la scheda
+  // dalla sezione Soci attivi: dalla Lista soci (semplice anagrafica) restano
+  // nascosti, cosi' non si rischia di doverli compilare per forza.
+  document.querySelectorAll(".campo-attivi").forEach((el) => {
+    el.hidden = context !== "attivi";
+  });
   modalSocio.hidden = false;
   document.getElementById("fNominativo").focus();
 }
@@ -368,7 +383,7 @@ function closeModalSocio() {
   modalSocio.hidden = true;
 }
 
-document.getElementById("btnNuovoSocio").addEventListener("click", () => openModalSocio(null));
+document.getElementById("btnNuovoSocio").addEventListener("click", () => openModalSocio(null, "storico"));
 document.getElementById("btnAnnullaSocio").addEventListener("click", closeModalSocio);
 modalSocio.addEventListener("click", (e) => {
   if (e.target === modalSocio) closeModalSocio();
@@ -509,15 +524,14 @@ function attiviColumns() {
     { label: "ID", value: (s, i) => i + 1 },
     { label: "Tessera", value: (s) => s.tessera },
     { label: "Socio", value: (s) => s.nominativo },
-    { label: "Eta", value: (s) => calcolaEta(s.dataNascita) },
+    { label: "Data di nascita", value: (s) => formatDataIt(s.dataNascita) },
     { label: "Indirizzo", value: (s) => s.indirizzo },
     { label: "e-Mail", value: (s) => s.email },
     { label: "Telefono", value: (s) => s.telefono },
-    { label: "Anzianita", value: (s) => calcolaAnzianita(s.dataEntrata) },
-    { label: "Quota", value: (s) => s.quota },
     { label: "Bonifico", value: (s) => (s.pagamentoBonifico ? "si" : "no") },
     { label: "Quota pagata", value: (s) => (s.quotaPagata ? "si" : "no") },
     { label: "Ricevuta consegnata", value: (s) => (s.ricevutaConsegnata ? "si" : "no") },
+    { label: "Quota", value: (s) => s.quota },
   ];
 }
 
@@ -949,7 +963,7 @@ function initGoogleWhenReady() {
             loadFromDrive(fileId).catch((err) => {
               console.error(err);
               toast(
-                "Impossibile caricare i dati da Drive. Se e' la prima volta che accedi, vai in Impostazioni e usa \"Scegli file da Drive\" per autorizzare l'accesso.",
+                "Impossibile caricare i dati da Drive. Se e' la prima volta che accedi, vai in Impostazioni e usa \"Connetti a file esistente\" per autorizzare l'accesso.",
                 "error"
               );
             });
