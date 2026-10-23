@@ -4,7 +4,7 @@
 // IMPORTANTE: prima di usare l'app vera e propria, sostituisci GOOGLE_CLIENT_ID
 // con il Client ID OAuth creato su Google Cloud Console (vedi README.md).
 
-export const GOOGLE_CLIENT_ID = "INSERISCI_QUI_IL_TUO_CLIENT_ID.apps.googleusercontent.com";
+export const GOOGLE_CLIENT_ID = "49504779196-gi4m2atmjnemvg2sa6inbutc6f5cu4i4.apps.googleusercontent.com";
 
 // Scope "drive" completo: scelto per semplicita' (nessuna integrazione del
 // Picker API necessaria). Con questo scope, chiunque acceda con un account
