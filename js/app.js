@@ -538,6 +538,19 @@ async function loadFromDrive(fileId) {
   updateSyncStatusUI();
 }
 
+// ===================== VISIBILITA' SCHEDA IMPOSTAZIONI (SOLO ADMIN) =====================
+function applyAdminVisibility(email) {
+  const tabBtn = document.querySelector('[data-tab="impostazioni"]');
+  const restricted = !!Drive.ADMIN_EMAIL;
+  // Finche' non conosciamo l'email (prima del login) la scheda resta visibile,
+  // altrimenti nessuno (nemmeno l'admin) potrebbe mai cliccare "Accedi con Google".
+  const shouldHide = restricted && email && email.toLowerCase() !== Drive.ADMIN_EMAIL.toLowerCase();
+  tabBtn.hidden = shouldHide;
+  if (shouldHide && document.getElementById("tab-impostazioni").classList.contains("active")) {
+    document.querySelector('[data-tab="storico"]').click();
+  }
+}
+
 function renderGoogleSigninArea() {
   const area = document.getElementById("googleSigninArea");
   area.innerHTML = "";
@@ -549,6 +562,7 @@ function renderGoogleSigninArea() {
       Drive.signOut();
       renderGoogleSigninArea();
       updateSyncStatusUI();
+      applyAdminVisibility("");
     });
   } else {
     btn.textContent = "Accedi con Google";
@@ -618,6 +632,7 @@ function initGoogleWhenReady() {
         renderGoogleSigninArea();
         updateSyncStatusUI();
         if (signedIn) {
+          Drive.getUserEmail().then((email) => applyAdminVisibility(email));
           const fileId = Drive.getStoredFileId();
           if (fileId) {
             loadFromDrive(fileId).catch((err) => {
@@ -625,6 +640,8 @@ function initGoogleWhenReady() {
               toast("Impossibile caricare i dati da Drive: " + err.message, "error");
             });
           }
+        } else {
+          applyAdminVisibility("");
         }
       });
       renderGoogleSigninArea();
@@ -640,6 +657,7 @@ function main() {
   syncInputsFromState();
   renderAll();
   updateSyncStatusUI();
+  applyAdminVisibility("");
   initGoogleWhenReady();
 
   window.addEventListener("beforeunload", (e) => {
