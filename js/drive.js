@@ -4,7 +4,7 @@
 // IMPORTANTE: prima di usare l'app vera e propria, sostituisci GOOGLE_CLIENT_ID
 // con il Client ID OAuth creato su Google Cloud Console (vedi README.md).
 
-export const GOOGLE_CLIENT_ID = "49504779196-gi4m2atmjnemvg2sa6inbutc6f5cu4i4.apps.googleusercontent.com";
+export const GOOGLE_CLIENT_ID = "223079985709-imr1aidpeoc3cmh1p3m4iv6ast93fbes.apps.googleusercontent.com";
 
 // ID del file soci su Google Drive: una volta creato il file "canonico"
 // (pulsante "Crea nuovo file su Drive", da fare una volta sola), incolla qui
