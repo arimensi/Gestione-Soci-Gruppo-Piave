@@ -18,6 +18,10 @@ import {
 
 import * as Drive from "./drive.js";
 
+function annoCorrente() {
+  return new Date().getFullYear();
+}
+
 // ===================== TOAST =====================
 let toastTimer = null;
 function toast(msg, type = "") {
@@ -154,7 +158,7 @@ function renderAttivi() {
   const totale = contaAttivi();
   const limite = state.meta.limiteSoci || 90;
   const badge = document.getElementById("attiviCountBadge");
-  badge.textContent = `${totale}/${limite}`;
+  badge.textContent = `${annoCorrente()} · ${totale}/${limite}`;
   badge.className = "badge" + (totale >= limite ? " badge-full" : totale >= limite - 5 ? " badge-near" : "");
   const hint = document.getElementById("limiteSociHint");
   if (totale > limite) {
@@ -216,7 +220,7 @@ document.getElementById("attiviBody").addEventListener("click", (e) => {
   const id = tr.dataset.id;
   if (e.target.closest(".btn-rimuovi")) {
     const s = state.soci.find((x) => x.id === id);
-    if (s && confirm(`Rimuovere ${s.nominativo} dai soci attivi ${state.meta.annoAttivo}?\n\nRestera' comunque nello storico.`)) {
+    if (s && confirm(`Rimuovere ${s.nominativo} dai soci attivi ${annoCorrente()}?\n\nRestera' comunque nello storico.`)) {
       s.attivo = false;
       markDirty();
       renderAll();
@@ -367,19 +371,16 @@ document.getElementById("pickerBody").addEventListener("click", (e) => {
 
 // ===================== NUOVO ANNO =====================
 document.getElementById("btnNuovoAnno").addEventListener("click", () => {
-  const anno = state.meta.annoAttivo;
   if (
     !confirm(
-      `Avviare un nuovo anno sociale?\n\nTutti i ${contaAttivi()} soci attualmente attivi (anno ${anno}) verranno spostati tra i non-attivi. Lo storico non viene toccato: potrai riaggiungere i soci confermati per il nuovo anno dalla lista storico.\n\nProcedere?`
+      `Avviare un nuovo anno sociale?\n\nTutti i ${contaAttivi()} soci attualmente attivi verranno spostati tra i non-attivi. Lo storico non viene toccato: potrai riaggiungere i soci confermati per il nuovo anno (${annoCorrente()}) dalla lista storico.\n\nProcedere?`
     )
   )
     return;
   state.soci.forEach((s) => (s.attivo = false));
-  state.meta.annoAttivo = anno + 1;
-  document.getElementById("inputAnnoAttivo").value = state.meta.annoAttivo;
   markDirty();
   renderAll();
-  toast(`Nuovo anno sociale avviato: ${state.meta.annoAttivo}`);
+  toast(`Soci attivi azzerati per l'anno ${annoCorrente()}`);
 });
 
 // ===================== EXPORT CSV / BACKUP =====================
@@ -410,7 +411,6 @@ document.getElementById("btnScaricaBackup").addEventListener("click", () => {
 
 // ===================== IMPOSTAZIONI: ANNO / LIMITE =====================
 document.getElementById("btnSalvaImpostazioniAnno").addEventListener("click", () => {
-  state.meta.annoAttivo = Number(document.getElementById("inputAnnoAttivo").value) || state.meta.annoAttivo;
   state.meta.limiteSoci = Number(document.getElementById("inputLimiteSoci").value) || state.meta.limiteSoci;
   markDirty();
   renderAll();
@@ -452,7 +452,10 @@ document.getElementById("inputImportFile").addEventListener("change", async (e) 
 });
 
 function syncInputsFromState() {
-  document.getElementById("inputAnnoAttivo").value = state.meta.annoAttivo;
+  const inputAnno = document.getElementById("inputAnnoAttivo");
+  inputAnno.value = annoCorrente();
+  inputAnno.readOnly = true;
+  inputAnno.title = "Calcolato automaticamente dalla data del computer";
   document.getElementById("inputLimiteSoci").value = state.meta.limiteSoci;
 }
 
