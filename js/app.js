@@ -4,11 +4,14 @@ import {
   calcolaEta,
   calcolaAnzianita,
   formatDataIt,
+  annoNascita,
+  tessereDuplicate,
   loadFromLocalCache,
   saveToLocalCache,
   setData,
   upsertSocio,
   deleteSocio,
+  chiudiAnno,
   markDirty,
   clearDirty,
   contaAttivi,
@@ -18,14 +21,11 @@ import {
 
 import * as Drive from "./drive.js";
 
-function annoCorrente() {
-  return new Date().getFullYear();
-}
-
 function datiVuoti() {
   return {
-    meta: { annoAttivo: annoCorrente(), limiteSoci: 90, ultimaModifica: null, modificatoDa: null, fonte: "" },
+    meta: { annoAttivo: new Date().getFullYear(), limiteSoci: 90, ultimaModifica: null, modificatoDa: null, fonte: "" },
     soci: [],
+    storicoAttivi: [],
   };
 }
 
@@ -47,11 +47,28 @@ document.getElementById("tabs").addEventListener("click", (e) => {
   document.querySelectorAll(".tab-btn").forEach((b) => b.classList.toggle("active", b === btn));
   const tab = btn.dataset.tab;
   document.querySelectorAll(".tab-panel").forEach((p) => p.classList.toggle("active", p.id === "tab-" + tab));
+  if (tab === "storicoattivi") renderStoricoAttivi();
 });
+
+// ===================== NOTE DINAMICHE (tessera duplicata si auto-risolve) =====================
+// Il testo "tessera duplicata" importato dai PDF storici restava scritto per
+// sempre nel campo note anche dopo aver sistemato il duplicato (es.
+// eliminando una delle due righe). Per questo il controllo duplicati va
+// sempre ricalcolato dal vivo, non letto dal testo salvato.
+const PREFISSO_NOTA_DUPLICATO = /^Numero tessera duplicato nello storico: verificare(; )?/;
+
+function notaEffettiva(s, duplicati) {
+  const resto = (s.note || "").replace(PREFISSO_NOTA_DUPLICATO, "").trim();
+  const parti = [];
+  if (s.tessera && duplicati.has(s.tessera)) parti.push("Numero tessera duplicato: verificare");
+  if (resto) parti.push(resto);
+  return parti.join("; ");
+}
 
 // ===================== SORT / FILTER STATE =====================
 const storicoState = { sort: { col: "nominativo", dir: "asc" }, search: "", filtro: "tutti" };
 const attiviState = { sort: { col: "nominativo", dir: "asc" }, search: "" };
+const storicoAttiviState = { sort: { col: "nominativo", dir: "asc" }, search: "" };
 
 function cmp(a, b) {
   if (a === null || a === undefined || a === "") return b === null || b === undefined || b === "" ? 0 : 1;
@@ -62,8 +79,12 @@ function cmp(a, b) {
 
 function getSortValue(socio, col) {
   switch (col) {
+    case "id":
+      return null; // gestito separatamente (posizione nell'elenco)
     case "eta":
       return calcolaEta(socio.dataNascita);
+    case "annoNascita":
+      return socio.dataNascita || "";
     case "anzianita":
       return calcolaAnzianita(socio.dataEntrata);
     case "attivo":
@@ -80,6 +101,7 @@ function getSortValue(socio, col) {
 }
 
 function sortSoci(list, sort) {
+  if (sort.col === "id") return list; // "ID" segue l'ordine gia' presente
   const dir = sort.dir === "asc" ? 1 : -1;
   return [...list].sort((a, b) => dir * cmp(getSortValue(a, sort.col), getSortValue(b, sort.col)));
 }
@@ -92,24 +114,27 @@ function matchesSearch(socio, q) {
   return hay.includes(q.toLowerCase());
 }
 
-// ===================== RENDER: STORICO =====================
+// ===================== RENDER: LISTA SOCI (anagrafica) =====================
 function filteredStorico() {
   let list = state.soci.filter((s) => matchesSearch(s, storicoState.search));
+  const duplicati = tessereDuplicate(state.soci);
   if (storicoState.filtro === "attivi") list = list.filter((s) => s.attivo);
   else if (storicoState.filtro === "nonattivi") list = list.filter((s) => !s.attivo);
-  else if (storicoState.filtro === "note") list = list.filter((s) => s.note && s.note.trim());
+  else if (storicoState.filtro === "note") list = list.filter((s) => notaEffettiva(s, duplicati));
   return sortSoci(list, storicoState.sort);
 }
 
 function renderStorico() {
   const list = filteredStorico();
+  const duplicati = tessereDuplicate(state.soci);
   const body = document.getElementById("storicoBody");
   body.innerHTML = list
     .map((s) => {
       const eta = calcolaEta(s.dataNascita);
       const anz = calcolaAnzianita(s.dataEntrata);
-      const noteIcon = s.note && s.note.trim() ? `<span class="row-note-icon" title="${escapeAttr(s.note)}">⚠</span>` : "";
-      return `<tr data-id="${s.id}" class="${s.note && s.note.trim() ? "row-note" : ""}">
+      const nota = notaEffettiva(s, duplicati);
+      const noteIcon = nota ? `<span class="row-note-icon" title="${escapeAttr(nota)}">⚠</span>` : "";
+      return `<tr data-id="${s.id}" class="${nota ? "row-note" : ""}">
         <td>${escapeHtml(s.tessera)}</td>
         <td>${noteIcon}${escapeHtml(s.nominativo)}</td>
         <td>${eta ?? ""}</td>
@@ -127,7 +152,7 @@ function renderStorico() {
   updateSortHeaders(document.getElementById("tableStorico"), storicoState.sort);
 }
 
-// ===================== RENDER: ATTIVI =====================
+// ===================== RENDER: SOCI ATTIVI (anno corrente) =====================
 function filteredAttivi() {
   let list = state.soci.filter((s) => s.attivo && matchesSearch(s, attiviState.search));
   return sortSoci(list, attiviState.sort);
@@ -137,14 +162,16 @@ function renderAttivi() {
   const list = filteredAttivi();
   const body = document.getElementById("attiviBody");
   body.innerHTML = list
-    .map((s) => {
+    .map((s, idx) => {
       const eta = calcolaEta(s.dataNascita);
       const anz = calcolaAnzianita(s.dataEntrata);
       const check = (v) => (v ? '<span class="check-yes">&check;</span>' : '<span class="check-no">—</span>');
       return `<tr data-id="${s.id}">
+        <td>${idx + 1}</td>
         <td>${escapeHtml(s.tessera)}</td>
         <td>${escapeHtml(s.nominativo)}</td>
         <td>${eta ?? ""}</td>
+        <td>${escapeHtml(s.indirizzo)}</td>
         <td>${escapeHtml(s.email)}</td>
         <td>${escapeHtml(s.telefono)}</td>
         <td>${anz ?? ""}</td>
@@ -165,7 +192,7 @@ function renderAttivi() {
   const totale = contaAttivi();
   const limite = state.meta.limiteSoci || 90;
   const badge = document.getElementById("attiviCountBadge");
-  badge.textContent = `${annoCorrente()} · ${totale}/${limite}`;
+  badge.textContent = `${state.meta.annoAttivo} · ${totale}/${limite}`;
   badge.className = "badge" + (totale >= limite ? " badge-full" : totale >= limite - 5 ? " badge-near" : "");
   const hint = document.getElementById("limiteSociHint");
   if (totale > limite) {
@@ -179,6 +206,72 @@ function renderAttivi() {
     hint.style.color = "";
   }
 }
+
+// ===================== RENDER: STORICO SOCI ATTIVI (anni passati) =====================
+function popolaSelettoreAnniStoricoAttivi() {
+  const sel = document.getElementById("storicoAttiviAnno");
+  const annoSelezionato = sel.value;
+  const anni = state.storicoAttivi.map((a) => a.anno);
+  sel.innerHTML = anni.length
+    ? anni.map((a) => `<option value="${a}">${a}</option>`).join("")
+    : `<option value="">Nessun anno archiviato</option>`;
+  if (anni.includes(Number(annoSelezionato))) sel.value = annoSelezionato;
+}
+
+function annoStoricoSelezionato() {
+  const sel = document.getElementById("storicoAttiviAnno");
+  const v = Number(sel.value);
+  return state.storicoAttivi.find((a) => a.anno === v) || null;
+}
+
+function renderStoricoAttivi() {
+  popolaSelettoreAnniStoricoAttivi();
+  const archivio = annoStoricoSelezionato();
+  const body = document.getElementById("storicoAttiviBody");
+  const hint = document.getElementById("storicoAttiviHint");
+
+  if (!archivio) {
+    body.innerHTML = "";
+    document.getElementById("storicoAttiviCount").textContent = "";
+    hint.textContent =
+      state.storicoAttivi.length === 0
+        ? "Nessun anno ancora archiviato: usa \"Chiudi anno\" nella scheda Soci attivi quando un anno sociale si conclude."
+        : "";
+    updateSortHeaders(document.getElementById("tableStoricoAttivi"), storicoAttiviState.sort);
+    return;
+  }
+  hint.textContent = "";
+
+  let list = archivio.soci.filter((s) => matchesSearch(s, storicoAttiviState.search));
+  list = sortSoci(list, storicoAttiviState.sort);
+
+  body.innerHTML = list
+    .map((s, idx) => {
+      const check = (v) => (v ? '<span class="check-yes">&check;</span>' : '<span class="check-no">—</span>');
+      return `<tr>
+        <td>${idx + 1}</td>
+        <td>${escapeHtml(s.tessera)}</td>
+        <td>${escapeHtml(s.nominativo)}</td>
+        <td>${escapeHtml(annoNascita(s.dataNascita))}</td>
+        <td>${escapeHtml(s.indirizzo)}</td>
+        <td>${escapeHtml(s.email)}</td>
+        <td>${escapeHtml(s.telefono)}</td>
+        <td>${s.quota != null ? "€ " + Number(s.quota).toFixed(2) : ""}</td>
+        <td>${check(s.pagamentoBonifico)}</td>
+        <td>${check(s.quotaPagata)}</td>
+        <td>${check(s.ricevutaConsegnata)}</td>
+      </tr>`;
+    })
+    .join("");
+  document.getElementById("storicoAttiviCount").textContent = `${list.length} di ${archivio.soci.length} soci (anno ${archivio.anno})`;
+  updateSortHeaders(document.getElementById("tableStoricoAttivi"), storicoAttiviState.sort);
+}
+
+document.getElementById("storicoAttiviAnno").addEventListener("change", renderStoricoAttivi);
+document.getElementById("storicoAttiviSearch").addEventListener("input", (e) => {
+  storicoAttiviState.search = e.target.value;
+  renderStoricoAttivi();
+});
 
 function updateSortHeaders(table, sort) {
   table.querySelectorAll("th[data-col]").forEach((th) => {
@@ -227,7 +320,7 @@ document.getElementById("attiviBody").addEventListener("click", (e) => {
   const id = tr.dataset.id;
   if (e.target.closest(".btn-rimuovi")) {
     const s = state.soci.find((x) => x.id === id);
-    if (s && confirm(`Rimuovere ${s.nominativo} dai soci attivi ${annoCorrente()}?\n\nRestera' comunque nello storico.`)) {
+    if (s && confirm(`Rimuovere ${s.nominativo} dai soci attivi ${state.meta.annoAttivo}?\n\nRestera' comunque nello storico.`)) {
       s.attivo = false;
       markDirty();
       renderAll();
@@ -241,6 +334,7 @@ document.getElementById("attiviBody").addEventListener("click", (e) => {
 function renderAll() {
   renderStorico();
   renderAttivi();
+  if (document.getElementById("tab-storicoattivi").classList.contains("active")) renderStoricoAttivi();
 }
 
 // ===================== MODAL: NUOVO / MODIFICA SOCIO =====================
@@ -376,18 +470,20 @@ document.getElementById("pickerBody").addEventListener("click", (e) => {
   toast(`${s.nominativo} aggiunto ai soci attivi`);
 });
 
-// ===================== NUOVO ANNO =====================
+// ===================== CHIUDI ANNO =====================
 document.getElementById("btnNuovoAnno").addEventListener("click", () => {
+  const annoInChiusura = state.meta.annoAttivo;
+  const numAttivi = contaAttivi();
   if (
     !confirm(
-      `Avviare un nuovo anno sociale?\n\nTutti i ${contaAttivi()} soci attualmente attivi verranno spostati tra i non-attivi. Lo storico non viene toccato: potrai riaggiungere i soci confermati per il nuovo anno (${annoCorrente()}) dalla lista storico.\n\nProcedere?`
+      `Chiudere l'anno sociale ${annoInChiusura}?\n\nI ${numAttivi} soci attualmente attivi verranno salvati nello Storico soci attivi (anno ${annoInChiusura}). L'elenco "Soci attivi" verra' svuotato e il nuovo anno sara' il ${annoInChiusura + 1}.\n\nProcedere?`
     )
   )
     return;
-  state.soci.forEach((s) => (s.attivo = false));
-  markDirty();
+  const annoChiuso = chiudiAnno();
   renderAll();
-  toast(`Soci attivi azzerati per l'anno ${annoCorrente()}`);
+  syncInputsFromState();
+  toast(`Anno ${annoChiuso} archiviato. Nuovo anno attivo: ${state.meta.annoAttivo}`);
 });
 
 // ===================== EXPORT CSV / EXCEL / PDF / BACKUP =====================
@@ -404,16 +500,17 @@ function storicoColumns() {
     { label: "Attivo", value: (s) => (s.attivo ? "si" : "no") },
     { label: "e-Mail", value: (s) => s.email },
     { label: "Telefono", value: (s) => s.telefono },
-    { label: "Quota", value: (s) => s.quota },
-    { label: "Note", value: (s) => s.note },
+    { label: "Note", value: (s) => notaEffettiva(s, tessereDuplicate(state.soci)) },
   ];
 }
 
 function attiviColumns() {
   return [
+    { label: "ID", value: (s, i) => i + 1 },
     { label: "Tessera", value: (s) => s.tessera },
     { label: "Socio", value: (s) => s.nominativo },
     { label: "Eta", value: (s) => calcolaEta(s.dataNascita) },
+    { label: "Indirizzo", value: (s) => s.indirizzo },
     { label: "e-Mail", value: (s) => s.email },
     { label: "Telefono", value: (s) => s.telefono },
     { label: "Anzianita", value: (s) => calcolaAnzianita(s.dataEntrata) },
@@ -441,10 +538,10 @@ function loadXlsxLib() {
 
 async function exportXlsx(rows, columns, filenamePrefix) {
   await loadXlsxLib();
-  const data = rows.map((r) => {
+  const data = rows.map((r, i) => {
     const obj = {};
     columns.forEach((c) => {
-      const v = c.value(r);
+      const v = c.value(r, i);
       obj[c.label] = v === null || v === undefined ? "" : v;
     });
     return obj;
@@ -465,10 +562,10 @@ function exportPdf(rows, columns, titolo) {
   win.opener = null;
   const headCells = columns.map((c) => `<th>${escapeHtml(c.label)}</th>`).join("");
   const bodyRows = rows
-    .map((r) => {
+    .map((r, i) => {
       const cells = columns
         .map((c) => {
-          const v = c.value(r);
+          const v = c.value(r, i);
           return `<td>${escapeHtml(v === null || v === undefined ? "" : v)}</td>`;
         })
         .join("");
@@ -537,16 +634,35 @@ aggiungiPulsantiExport(
   "storicoCount",
   filteredStorico,
   storicoColumns,
-  "soci-storico-gruppo-piave",
-  "Storico soci - Gruppo Aeromodellistico Piave"
+  "lista-soci-gruppo-piave",
+  "Lista soci - Gruppo Aeromodellistico Piave"
 );
 aggiungiPulsantiExport(
   "attiviCount",
   filteredAttivi,
   attiviColumns,
   "soci-attivi-gruppo-piave",
-  `Soci attivi ${annoCorrente()} - Gruppo Aeromodellistico Piave`
+  () => `Soci attivi ${state.meta.annoAttivo} - Gruppo Aeromodellistico Piave`
 );
+
+// --- Estrazione per assicurazione: PDF a formato fisso, sempre ordinato per nome ---
+document.getElementById("btnEstrazioneAssicurazione").addEventListener("click", () => {
+  const list = state.soci.filter((s) => s.attivo).sort((a, b) => cmp(a.nominativo, b.nominativo));
+  if (list.length === 0) {
+    toast("Nessun socio attivo da esportare", "error");
+    return;
+  }
+  const columns = [
+    { label: "ID", value: (s, i) => i + 1 },
+    { label: "Tessera", value: (s) => s.tessera },
+    { label: "Cognome e nome", value: (s) => s.nominativo },
+    { label: "Anno di nascita", value: (s) => annoNascita(s.dataNascita) },
+    { label: "Indirizzo", value: (s) => s.indirizzo },
+    { label: "e-Mail", value: (s) => s.email },
+    { label: "Telefono", value: (s) => s.telefono },
+  ];
+  exportPdf(list, columns, `Estrazione per assicurazione ${state.meta.annoAttivo} - Gruppo Aeromodellistico Piave`);
+});
 
 // ===================== IMPOSTAZIONI: ANNO / LIMITE =====================
 document.getElementById("btnSalvaImpostazioniAnno").addEventListener("click", () => {
@@ -575,7 +691,7 @@ document.getElementById("inputImportFile").addEventListener("change", async (e) 
         return;
       }
     }
-    setData(parsed.meta || state.meta, parsed.soci);
+    setData(parsed.meta || state.meta, parsed.soci, parsed.storicoAttivi || []);
     markDirty();
     renderAll();
     syncInputsFromState();
@@ -592,9 +708,9 @@ document.getElementById("inputImportFile").addEventListener("change", async (e) 
 
 function syncInputsFromState() {
   const inputAnno = document.getElementById("inputAnnoAttivo");
-  inputAnno.value = annoCorrente();
+  inputAnno.value = state.meta.annoAttivo;
   inputAnno.readOnly = true;
-  inputAnno.title = "Calcolato automaticamente dalla data del computer";
+  inputAnno.title = "Si aggiorna solo chiudendo l'anno dalla scheda Soci attivi";
   document.getElementById("inputLimiteSoci").value = state.meta.limiteSoci;
 }
 
@@ -668,7 +784,7 @@ async function doSaveToDrive() {
         return;
       }
     }
-    const payload = { meta: state.meta, soci: state.soci };
+    const payload = { meta: state.meta, soci: state.soci, storicoAttivi: state.storicoAttivi };
     await Drive.driveUpdateFileContent(fileId, payload);
     clearDirty();
     updateSyncStatusUI();
@@ -700,21 +816,24 @@ async function loadFromDrive(fileId) {
   if (!content || !Array.isArray(content.soci)) throw new Error("Il file su Drive non ha un formato valido");
   const meta = await Drive.driveGetFileMetadata(fileId);
   Drive.noteSyncedTime(meta.modifiedTime);
-  setData(content.meta || state.meta, content.soci);
+  setData(content.meta || state.meta, content.soci, content.storicoAttivi || []);
   clearDirty();
   renderAll();
   syncInputsFromState();
   updateSyncStatusUI();
 }
 
-// ===================== VISIBILITA' SCHEDA IMPOSTAZIONI (SOLO ADMIN) =====================
+// ===================== VISIBILITA'/ETICHETTA SCHEDA IMPOSTAZIONI (SOLO ADMIN) =====================
+const tabBtnImpostazioni = document.getElementById("tabBtnImpostazioni");
+
 function applyAdminVisibility(email) {
-  const tabBtn = document.querySelector('[data-tab="impostazioni"]');
   const restricted = !!Drive.ADMIN_EMAIL;
+  const isAdmin = restricted && email && email.toLowerCase() === Drive.ADMIN_EMAIL.toLowerCase();
   // Finche' non conosciamo l'email (prima del login) la scheda resta visibile,
   // altrimenti nessuno (nemmeno l'admin) potrebbe mai cliccare "Accedi con Google".
-  const shouldHide = restricted && email && email.toLowerCase() !== Drive.ADMIN_EMAIL.toLowerCase();
-  tabBtn.hidden = shouldHide;
+  const shouldHide = restricted && email && !isAdmin;
+  tabBtnImpostazioni.hidden = shouldHide;
+  tabBtnImpostazioni.textContent = isAdmin ? "Impostazioni / Sync" : "Accedi";
   if (shouldHide && document.getElementById("tab-impostazioni").classList.contains("active")) {
     document.querySelector('[data-tab="storico"]').click();
   }
@@ -743,8 +862,10 @@ function renderGoogleSigninArea() {
     btn.textContent = "Disconnetti account Google";
     btn.addEventListener("click", () => {
       Drive.signOut();
+      // Svuota i dati visualizzati/salvati in locale: da disconnessi non
+      // deve restare visibile nulla che possa sembrare "dato corrente".
       const vuoto = datiVuoti();
-      setData(vuoto.meta, vuoto.soci);
+      setData(vuoto.meta, vuoto.soci, vuoto.storicoAttivi);
       clearDirty();
       renderAll();
       syncInputsFromState();
@@ -763,7 +884,7 @@ function renderGoogleSigninArea() {
 document.getElementById("btnCreaFileDrive").addEventListener("click", async () => {
   if (!confirm("Creare un nuovo file 'soci-gruppo-piave.json' su Google Drive con i dati attuali?")) return;
   try {
-    const payload = { meta: state.meta, soci: state.soci };
+    const payload = { meta: state.meta, soci: state.soci, storicoAttivi: state.storicoAttivi };
     const data = await Drive.driveCreateFile("soci-gruppo-piave.json", payload);
     clearDirty();
     updateSyncStatusUI();
@@ -827,7 +948,10 @@ function initGoogleWhenReady() {
           if (fileId) {
             loadFromDrive(fileId).catch((err) => {
               console.error(err);
-              toast("Impossibile caricare i dati da Drive: " + err.message, "error");
+              toast(
+                "Impossibile caricare i dati da Drive. Se e' la prima volta che accedi, vai in Impostazioni e usa \"Scegli file da Drive\" per autorizzare l'accesso.",
+                "error"
+              );
             });
           }
         } else {
@@ -843,6 +967,10 @@ function initGoogleWhenReady() {
 }
 
 function main() {
+  // Non si ricarica la cache locale all'avvio: finche' non si fa di nuovo
+  // accesso con Google, l'app parte vuota (niente dati "vecchi" visibili da
+  // disconnessi, es. dopo un refresh della pagina - l'accesso Google non
+  // sopravvive al ricaricamento).
   syncInputsFromState();
   renderAll();
   updateSyncStatusUI();
