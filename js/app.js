@@ -22,6 +22,13 @@ function annoCorrente() {
   return new Date().getFullYear();
 }
 
+function datiVuoti() {
+  return {
+    meta: { annoAttivo: annoCorrente(), limiteSoci: 90, ultimaModifica: null, modificatoDa: null, fonte: "" },
+    soci: [],
+  };
+}
+
 // ===================== TOAST =====================
 let toastTimer = null;
 function toast(msg, type = "") {
@@ -463,6 +470,16 @@ function syncInputsFromState() {
 const syncStatusText = document.getElementById("syncStatusText");
 const btnSyncNow = document.getElementById("btnSyncNow");
 
+// Pulsante "Ricarica dati" creato dinamicamente accanto a "Salva su Drive",
+// per riprendere i dati piu' recenti da Drive senza dover ricaricare tutta
+// la pagina (e quindi senza perdere l'accesso Google).
+const btnReloadDrive = document.createElement("button");
+btnReloadDrive.id = "btnReloadDrive";
+btnReloadDrive.className = "btn btn-small";
+btnReloadDrive.textContent = "Ricarica dati";
+btnReloadDrive.hidden = true;
+btnSyncNow.insertAdjacentElement("afterend", btnReloadDrive);
+
 function updateSyncStatusUI() {
   const signedIn = Drive.isSignedIn();
   const fileId = Drive.getStoredFileId();
@@ -484,6 +501,8 @@ function updateSyncStatusUI() {
     syncStatusText.className = "sync-text sync-online";
     btnSyncNow.hidden = true;
   }
+
+  btnReloadDrive.hidden = !(signedIn && fileId);
 
   document.getElementById("driveFileArea").hidden = !signedIn;
   const info = document.getElementById("driveFileInfo");
@@ -528,6 +547,21 @@ async function doSaveToDrive() {
   }
 }
 btnSyncNow.addEventListener("click", doSaveToDrive);
+
+btnReloadDrive.addEventListener("click", async () => {
+  const fileId = Drive.getStoredFileId();
+  if (!fileId) return;
+  if (state.dirty && !confirm("Hai modifiche non salvate. Ricaricare comunque da Drive?\n\nLe modifiche locali andranno perse.")) {
+    return;
+  }
+  try {
+    await loadFromDrive(fileId);
+    toast("Dati ricaricati da Drive", "success");
+  } catch (err) {
+    console.error(err);
+    toast("Impossibile ricaricare i dati: " + err.message, "error");
+  }
+});
 
 async function loadFromDrive(fileId) {
   const content = await Drive.driveGetFileContent(fileId);
@@ -577,6 +611,13 @@ function renderGoogleSigninArea() {
     btn.textContent = "Disconnetti account Google";
     btn.addEventListener("click", () => {
       Drive.signOut();
+      // Svuota i dati visualizzati/salvati in locale: da disconnessi non
+      // deve restare visibile nulla che possa sembrare "dato corrente".
+      const vuoto = datiVuoti();
+      setData(vuoto.meta, vuoto.soci);
+      clearDirty();
+      renderAll();
+      syncInputsFromState();
       renderGoogleSigninArea();
       updateSyncStatusUI();
       applyAdminVisibility("");
@@ -672,7 +713,10 @@ function initGoogleWhenReady() {
 }
 
 function main() {
-  loadFromLocalCache();
+  // Non si ricarica la cache locale all'avvio: finche' non si fa di nuovo
+  // accesso con Google, l'app parte vuota (niente dati "vecchi" visibili da
+  // disconnessi, es. dopo un refresh della pagina - l'accesso Google non
+  // sopravvive al ricaricamento).
   syncInputsFromState();
   renderAll();
   updateSyncStatusUI();
