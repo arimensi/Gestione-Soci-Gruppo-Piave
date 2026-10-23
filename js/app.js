@@ -507,7 +507,7 @@ function updateSyncStatusUI() {
   document.getElementById("driveFileArea").hidden = !signedIn;
   const info = document.getElementById("driveFileInfo");
   if (signedIn && fileId) {
-    info.innerHTML = `File collegato: <code>${fileId}</code>. <a href="https://drive.google.com/file/d/${fileId}/view" target="_blank" rel="noopener">Apri su Google Drive</a> per condividerlo con altri account.`;
+    info.innerHTML = `File collegato: <code>${escapeHtml(fileId)}</code>. <a href="https://drive.google.com/file/d/${escapeAttr(fileId)}/view" target="_blank" rel="noopener">Apri su Google Drive</a> per condividerlo con altri account.`;
   } else if (signedIn) {
     info.textContent = "Nessun file collegato. Creane uno nuovo oppure connettiti a un file esistente condiviso da un altro socio.";
   } else {
