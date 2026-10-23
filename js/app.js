@@ -554,6 +554,20 @@ function applyAdminVisibility(email) {
   }
 }
 
+// ===================== VISIBILITA' CARD IMPOSTAZIONI (SOLO SE CONNESSI) =====================
+// La prima card ("Connessione a Google Drive", con il pulsante Accedi) resta
+// sempre visibile. Le altre (import dati, anno sociale, backup) compaiono
+// solo dopo il login, per non confondere chi apre la scheda senza essere
+// ancora connesso.
+function applySettingsCardsVisibility() {
+  const cards = document.querySelectorAll(".settings-grid > .card");
+  const signedIn = Drive.isSignedIn();
+  cards.forEach((card, i) => {
+    if (i === 0) return;
+    card.hidden = !signedIn;
+  });
+}
+
 function renderGoogleSigninArea() {
   const area = document.getElementById("googleSigninArea");
   area.innerHTML = "";
@@ -566,6 +580,7 @@ function renderGoogleSigninArea() {
       renderGoogleSigninArea();
       updateSyncStatusUI();
       applyAdminVisibility("");
+      applySettingsCardsVisibility();
     });
   } else {
     btn.textContent = "Accedi con Google";
@@ -634,6 +649,7 @@ function initGoogleWhenReady() {
       Drive.initGoogleAuth((signedIn) => {
         renderGoogleSigninArea();
         updateSyncStatusUI();
+        applySettingsCardsVisibility();
         if (signedIn) {
           Drive.getUserEmail().then((email) => applyAdminVisibility(email));
           const fileId = Drive.getStoredFileId();
@@ -661,6 +677,7 @@ function main() {
   renderAll();
   updateSyncStatusUI();
   applyAdminVisibility("");
+  applySettingsCardsVisibility();
   initGoogleWhenReady();
 
   window.addEventListener("beforeunload", (e) => {
