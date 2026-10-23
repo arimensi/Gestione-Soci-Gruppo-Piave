@@ -17,7 +17,7 @@ export const DRIVE_FILE_ID = "1hn8nQxBPg9K5-8xM7RhXuP6437hCc5Mo";
 // Se impostata, la scheda "Impostazioni / Sync" (connessione Drive,
 // importazione dati, anno sociale, backup) e' visibile solo a questo
 // indirizzo email Google. Lascia vuoto per renderla visibile a tutti.
-export const ADMIN_EMAIL = "alessiorimensi@gmail.com";
+export const ADMIN_EMAIL = "gruppopiave.internal@gmail.com";
 
 // Scope "drive" completo: scelto per semplicita' (nessuna integrazione del
 // Picker API necessaria). Con questo scope, chiunque acceda con un account
