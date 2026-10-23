@@ -1,289 +1,372 @@
-<!DOCTYPE html>
-<html lang="it">
-<head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Soci - Gruppo Aeromodellistico Piave</title>
-<link rel="stylesheet" href="css/style.css">
-</head>
-<body>
+:root{
+  --blue-900:#0b3d66;
+  --blue-700:#14557f;
+  --blue-500:#1d74ad;
+  --blue-100:#e8f1f8;
+  --green-600:#1f8a4c;
+  --red-600:#c23b3b;
+  --amber-600:#b5790a;
+  --gray-50:#f7f8fa;
+  --gray-100:#eef0f3;
+  --gray-200:#dde1e6;
+  --gray-400:#9aa3af;
+  --gray-600:#5b6572;
+  --gray-800:#2b323b;
+  --radius:8px;
+  --shadow:0 2px 10px rgba(16,24,40,.08);
+}
+*{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
+body{
+  margin:0;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
+  background:var(--gray-50);
+  color:var(--gray-800);
+}
 
-<header class="topbar">
-  <div class="topbar-title">
-    <img src="assets/logo-gruppo-piave.png" alt="Logo Gruppo Aeromodellistico Piave" class="logo-img">
-    <div>
-      <h1>Gruppo Aeromodellistico Piave</h1>
-      <span class="subtitle">Gestione soci</span>
-    </div>
-  </div>
-  <div class="sync-status" id="syncStatus">
-    <span id="syncStatusText" class="sync-text sync-offline">Non connesso a Google Drive</span>
-    <button id="tabBtnImpostazioni" class="tab-btn" data-tab="impostazioni">Accedi</button>
-    <div id="floatingActions" class="floating-actions">
-      <button id="btnEstrazioneAssicurazione" class="btn btn-small">Estrazione per assicurazione</button>
-      <button id="btnSyncNow" class="btn btn-small btn-primary" hidden>Salva su Drive</button>
-    </div>
-  </div>
-</header>
+.topbar{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  background:var(--blue-900);
+  color:white;
+  padding:14px 20px;
+  flex-wrap:wrap;
+  gap:10px;
+}
+.topbar-title{display:flex;align-items:center;gap:10px;}
+.topbar-title .logo-img{height:44px;width:auto;display:block;}
+.topbar-title h1{margin:0;font-size:1.15rem;}
+.topbar-title .subtitle{font-size:.8rem;opacity:.8;}
+.sync-status{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
+.sync-text{font-size:.85rem;padding:4px 10px;border-radius:20px;}
+.sync-online{background:rgba(31,138,76,.25);color:#b9f3cd;}
+.sync-offline{background:rgba(255,255,255,.12);color:#e8ecf0;}
+.sync-pending{background:rgba(181,121,10,.3);color:#ffe3ad;}
 
-<nav class="tabs" id="tabs">
-  <button class="tab-btn active" data-tab="storico">Lista soci</button>
-  <button class="tab-btn" data-tab="attivi">Soci attivi <span id="attiviCountBadge" class="badge">0/90</span></button>
-  <button class="tab-btn" data-tab="storicoattivi">Storico soci attivi</button>
-</nav>
+/* Pulsante Accedi/Impostazioni spostato nell'angolo in alto a destra
+   dell'intestazione: stile "pillola" invece del look da scheda, per
+   distinguerlo visivamente dalle schede di navigazione vere e proprie. */
+.topbar .tab-btn{
+  background:white;
+  color:var(--blue-900);
+  border:none;
+  border-radius:20px;
+  padding:7px 16px;
+  font-size:.85rem;
+  border-bottom:none;
+}
+.topbar .tab-btn:hover{background:#dcebf7;color:var(--blue-900);}
+.topbar .tab-btn.active{background:var(--blue-500);color:white;font-weight:600;border-bottom:none;}
 
-<main>
+.tabs{
+  display:flex;
+  gap:4px;
+  background:white;
+  padding:0 16px;
+  border-bottom:1px solid var(--gray-200);
+  overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
+}
+.tab-btn{
+  border:none;
+  background:none;
+  padding:14px 16px;
+  font-size:.92rem;
+  cursor:pointer;
+  color:var(--gray-600);
+  border-bottom:3px solid transparent;
+  white-space:nowrap;
+  flex:0 0 auto;
+}
+.tab-btn:hover{color:var(--blue-700);}
+.tab-btn.active{color:var(--blue-900);border-bottom-color:var(--blue-500);font-weight:600;}
+.badge{
+  display:inline-block;
+  margin-left:6px;
+  background:var(--gray-100);
+  color:var(--gray-600);
+  border-radius:10px;
+  padding:1px 8px;
+  font-size:.75rem;
+}
+.badge.badge-full{background:var(--red-600);color:white;}
+.badge.badge-near{background:var(--amber-600);color:white;}
 
-  <!-- ===================== TAB: LISTA SOCI (anagrafica) ===================== -->
-  <section id="tab-storico" class="tab-panel active">
-    <div class="toolbar">
-      <input type="search" id="storicoSearch" placeholder="Cerca per nome, tessera, indirizzo..." class="search-box">
-      <select id="storicoFiltroAttivo" class="select">
-        <option value="tutti">Tutti i soci</option>
-        <option value="attivi">Solo attivi quest'anno</option>
-        <option value="nonattivi">Solo non attivi</option>
-        <option value="note">Solo con nota / da verificare</option>
-      </select>
-      <button id="btnNuovoSocio" class="btn btn-primary">+ Nuovo socio</button>
-      <button id="btnExportCsv" class="btn">Esporta CSV</button>
-      <span class="result-count" id="storicoCount"></span>
-    </div>
-    <div class="table-wrap">
-      <table id="tableStorico" class="data-table">
-        <thead>
-          <tr>
-            <th data-col="tessera">Tessera</th>
-            <th data-col="nominativo">Socio</th>
-            <th data-col="eta">Età</th>
-            <th data-col="dataNascita">Nato il</th>
-            <th data-col="luogoNascita">A</th>
-            <th data-col="indirizzo">Indirizzo</th>
-            <th data-col="dataEntrata">Entrato il</th>
-            <th data-col="anzianita">Anzianità</th>
-            <th data-col="attivo">Attivo</th>
-            <th class="col-actions"></th>
-          </tr>
-        </thead>
-        <tbody id="storicoBody"></tbody>
-      </table>
-    </div>
-  </section>
+main{padding:18px 20px 60px;max-width:1600px;margin:0 auto;}
+.tab-panel{display:none;}
+.tab-panel.active{display:block;}
 
-  <!-- ===================== TAB: SOCI ATTIVI (anno corrente) ===================== -->
-  <section id="tab-attivi" class="tab-panel">
-    <div class="toolbar">
-      <input type="search" id="attiviSearch" placeholder="Cerca tra i soci attivi..." class="search-box">
-      <button id="btnAggiungiAttivo" class="btn btn-primary">+ Aggiungi socio dallo storico</button>
-      <button id="btnNuovoAnno" class="btn btn-danger-outline">Chiudi anno</button>
-      <span class="result-count" id="attiviCount"></span>
-    </div>
-    <p class="hint" id="limiteSociHint"></p>
-    <div class="table-wrap">
-      <table id="tableAttivi" class="data-table">
-        <thead>
-          <tr>
-            <th data-col="id">ID</th>
-            <th data-col="tessera">Tessera</th>
-            <th data-col="nominativo">Socio</th>
-            <th data-col="dataNascita">Data nascita</th>
-            <th data-col="indirizzo">Indirizzo</th>
-            <th data-col="email">e-Mail</th>
-            <th data-col="telefono">Telefono</th>
-            <th data-col="pagamentoBonifico">Bonifico</th>
-            <th data-col="quotaPagata">Pagata</th>
-            <th data-col="ricevutaConsegnata">Ricevuta</th>
-            <th data-col="quota">Quota</th>
-            <th class="col-actions"></th>
-          </tr>
-        </thead>
-        <tbody id="attiviBody"></tbody>
-        <tfoot>
-          <tr>
-            <td colspan="10">Totale quote incassate</td>
-            <td id="attiviTotaleQuota"></td>
-            <td></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  </section>
+.toolbar{
+  display:flex;
+  flex-wrap:wrap;
+  gap:10px;
+  align-items:center;
+  margin-bottom:14px;
+}
+.search-box{
+  flex:1 1 260px;
+  padding:9px 12px;
+  border:1px solid var(--gray-200);
+  border-radius:var(--radius);
+  font-size:.9rem;
+}
+.select{
+  padding:9px 10px;
+  border:1px solid var(--gray-200);
+  border-radius:var(--radius);
+  font-size:.9rem;
+  background:white;
+}
+.result-count{
+  margin-left:auto;
+  font-size:.82rem;
+  color:var(--gray-600);
+}
+.hint{font-size:.82rem;color:var(--gray-600);}
 
-  <!-- ===================== TAB: STORICO SOCI ATTIVI (anni passati) ===================== -->
-  <section id="tab-storicoattivi" class="tab-panel">
-    <div class="toolbar">
-      <select id="storicoAttiviAnno" class="select"></select>
-      <input type="search" id="storicoAttiviSearch" placeholder="Cerca tra i soci di quell'anno..." class="search-box">
-      <span class="result-count" id="storicoAttiviCount"></span>
-    </div>
-    <p class="hint" id="storicoAttiviHint"></p>
-    <div class="table-wrap">
-      <table id="tableStoricoAttivi" class="data-table">
-        <thead>
-          <tr>
-            <th data-col="id">ID</th>
-            <th data-col="tessera">Tessera</th>
-            <th data-col="nominativo">Socio</th>
-            <th data-col="dataNascita">Data nascita</th>
-            <th data-col="indirizzo">Indirizzo</th>
-            <th data-col="email">e-Mail</th>
-            <th data-col="telefono">Telefono</th>
-            <th data-col="pagamentoBonifico">Bonifico</th>
-            <th data-col="quotaPagata">Pagata</th>
-            <th data-col="ricevutaConsegnata">Ricevuta</th>
-            <th data-col="quota">Quota</th>
-          </tr>
-        </thead>
-        <tbody id="storicoAttiviBody"></tbody>
-        <tfoot>
-          <tr>
-            <td colspan="10">Totale quote incassate</td>
-            <td id="storicoAttiviTotaleQuota"></td>
-          </tr>
-        </tfoot>
-      </table>
-    </div>
-  </section>
+.btn{
+  padding:9px 14px;
+  border-radius:var(--radius);
+  border:1px solid var(--gray-200);
+  background:white;
+  color:var(--gray-800);
+  cursor:pointer;
+  font-size:.88rem;
+  white-space:nowrap;
+}
+.btn:hover{border-color:var(--blue-500);color:var(--blue-700);}
+.btn-primary{background:var(--blue-700);border-color:var(--blue-700);color:white;}
+.btn-primary:hover{background:var(--blue-900);color:white;}
+.btn-small{padding:5px 10px;font-size:.78rem;}
+.btn-danger-outline{border-color:var(--red-600);color:var(--red-600);background:white;}
+.btn-danger-outline:hover{background:var(--red-600);color:white;}
+.btn-row{display:flex;gap:10px;flex-wrap:wrap;margin-top:8px;}
 
-  <!-- ===================== TAB: IMPOSTAZIONI / ACCEDI ===================== -->
-  <section id="tab-impostazioni" class="tab-panel">
-    <div class="settings-grid">
+.table-wrap{
+  overflow-x:auto;
+  overflow-y:auto;
+  max-height:calc(100vh - 230px);
+  -webkit-overflow-scrolling:touch;
+  background:white;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+}
+.data-table{
+  width:100%;
+  border-collapse:collapse;
+  font-size:.86rem;
+  min-width:900px;
+}
+.data-table th{
+  text-align:left;
+  padding:10px 12px;
+  background:var(--blue-100);
+  color:var(--blue-900);
+  cursor:pointer;
+  user-select:none;
+  white-space:nowrap;
+  position:sticky;
+  top:0;
+}
+.data-table th:hover{background:#d9e8f4;}
+.data-table th.sorted-asc::after{content:" ▲";font-size:.7em;}
+.data-table th.sorted-desc::after{content:" ▼";font-size:.7em;}
+.data-table td{
+  padding:8px 12px;
+  border-bottom:1px solid var(--gray-100);
+  vertical-align:top;
+  white-space:nowrap;
+}
+.data-table tbody tr:hover{background:var(--gray-50);}
+.data-table tbody tr.row-note{background:#fff8ea;}
+.data-table tbody tr.row-note:hover{background:#fff1d4;}
+.col-actions{width:1%;white-space:nowrap;}
+.row-note-icon{color:var(--amber-600);margin-right:4px;cursor:help;}
+.check-yes{color:var(--green-600);font-weight:700;}
+.check-no{color:var(--gray-400);}
 
-      <div class="card">
-        <h2>Connessione a Google Drive</h2>
-        <p>I dati dei soci vengono salvati in un file condiviso su Google Drive, cosi tutte le persone autorizzate vedono sempre gli stessi dati aggiornati.</p>
-        <div id="googleSigninArea"></div>
-        <p id="driveAccountInfo" class="hint"></p>
+.data-table tfoot td{
+  font-weight:700;
+  background:var(--blue-100);
+  color:var(--blue-900);
+  border-top:2px solid var(--blue-500);
+  white-space:nowrap;
+}
 
-        <div id="driveFileArea" hidden>
-          <hr>
-          <p id="driveFileInfo" class="hint"></p>
-          <div class="btn-row">
-            <button id="btnCreaFileDrive" class="btn">Crea nuovo file dati su Drive</button>
-            <button id="btnApriFileDrive" class="btn">Connetti a file esistente</button>
-          </div>
-          <div id="apriFileForm" class="inline-form" hidden>
-            <input type="text" id="inputDriveFileId" placeholder="Incolla qui il link o l'ID del file di Drive">
-            <button id="btnConfermaFileId" class="btn btn-primary">Connetti</button>
-          </div>
-        </div>
-      </div>
+/* Lista soci: colonne a larghezza fissa (altrimenti il browser allarga a
+   dismisura "Socio" e "A" quando lo schermo e' piu' largo del necessario).
+   Indirizzo resta la colonna con piu' spazio; i testi piu' lunghi vanno a
+   capo invece di sforare. */
+#tableStorico{table-layout:fixed;}
+#tableStorico th:nth-child(1),#tableStorico td:nth-child(1){width:7%;}
+#tableStorico th:nth-child(2),#tableStorico td:nth-child(2){width:15%;white-space:normal;}
+#tableStorico th:nth-child(3),#tableStorico td:nth-child(3){width:5%;}
+#tableStorico th:nth-child(4),#tableStorico td:nth-child(4){width:9%;}
+#tableStorico th:nth-child(5),#tableStorico td:nth-child(5){width:11%;white-space:normal;}
+#tableStorico th:nth-child(6),#tableStorico td:nth-child(6){width:26%;white-space:normal;}
+#tableStorico th:nth-child(7),#tableStorico td:nth-child(7){width:9%;}
+#tableStorico th:nth-child(8),#tableStorico td:nth-child(8){width:6%;}
+#tableStorico th:nth-child(9),#tableStorico td:nth-child(9){width:5%;}
+#tableStorico th:nth-child(10),#tableStorico td:nth-child(10){width:7%;}
 
-      <div class="card">
-        <h2>Importa dati iniziali</h2>
-        <p>Da usare una sola volta, al primo avvio, per caricare lo storico soci importato dai PDF (<code>soci-dati-iniziali-GAP.json</code>, nella cartella Download).</p>
-        <input type="file" id="inputImportFile" accept="application/json">
-        <p id="importStatus" class="hint"></p>
-      </div>
+/* Soci attivi / Storico soci attivi: stesso approccio, per evitare lo
+   scorrimento laterale anche con 11-12 colonne (email, indirizzo, telefono
+   compresi). */
+#tableAttivi{table-layout:fixed;}
+#tableAttivi th:nth-child(1),#tableAttivi td:nth-child(1){width:4%;}
+#tableAttivi th:nth-child(2),#tableAttivi td:nth-child(2){width:7%;}
+#tableAttivi th:nth-child(3),#tableAttivi td:nth-child(3){width:13%;white-space:normal;}
+#tableAttivi th:nth-child(4),#tableAttivi td:nth-child(4){width:8%;}
+#tableAttivi th:nth-child(5),#tableAttivi td:nth-child(5){width:16%;white-space:normal;}
+#tableAttivi th:nth-child(6),#tableAttivi td:nth-child(6){width:13%;white-space:normal;overflow-wrap:anywhere;}
+#tableAttivi th:nth-child(7),#tableAttivi td:nth-child(7){width:9%;}
+#tableAttivi th:nth-child(8),#tableAttivi td:nth-child(8){width:5%;}
+#tableAttivi th:nth-child(9),#tableAttivi td:nth-child(9){width:5%;}
+#tableAttivi th:nth-child(10),#tableAttivi td:nth-child(10){width:5%;}
+#tableAttivi th:nth-child(11),#tableAttivi td:nth-child(11){width:6%;}
+#tableAttivi th:nth-child(12),#tableAttivi td:nth-child(12){width:9%;}
 
-      <div class="card">
-        <h2>Anno sociale corrente</h2>
-        <label>Anno attivo
-          <input type="number" id="inputAnnoAttivo" class="input-small">
-        </label>
-        <label>Limite massimo soci attivi (per legge)
-          <input type="number" id="inputLimiteSoci" class="input-small">
-        </label>
-        <button id="btnSalvaImpostazioniAnno" class="btn">Salva</button>
-      </div>
+#tableStoricoAttivi{table-layout:fixed;}
+#tableStoricoAttivi th:nth-child(1),#tableStoricoAttivi td:nth-child(1){width:4%;}
+#tableStoricoAttivi th:nth-child(2),#tableStoricoAttivi td:nth-child(2){width:8%;}
+#tableStoricoAttivi th:nth-child(3),#tableStoricoAttivi td:nth-child(3){width:15%;white-space:normal;}
+#tableStoricoAttivi th:nth-child(4),#tableStoricoAttivi td:nth-child(4){width:9%;}
+#tableStoricoAttivi th:nth-child(5),#tableStoricoAttivi td:nth-child(5){width:19%;white-space:normal;}
+#tableStoricoAttivi th:nth-child(6),#tableStoricoAttivi td:nth-child(6){width:15%;white-space:normal;overflow-wrap:anywhere;}
+#tableStoricoAttivi th:nth-child(7),#tableStoricoAttivi td:nth-child(7){width:10%;}
+#tableStoricoAttivi th:nth-child(8),#tableStoricoAttivi td:nth-child(8){width:5%;}
+#tableStoricoAttivi th:nth-child(9),#tableStoricoAttivi td:nth-child(9){width:5%;}
+#tableStoricoAttivi th:nth-child(10),#tableStoricoAttivi td:nth-child(10){width:5%;}
+#tableStoricoAttivi th:nth-child(11),#tableStoricoAttivi td:nth-child(11){width:5%;}
 
-      <div class="card">
-        <h2>Dati grezzi</h2>
-        <p class="hint">Solo per emergenza / debug.</p>
-        <button id="btnScaricaBackup" class="btn">Scarica backup JSON locale</button>
-      </div>
+.settings-grid{
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(320px,1fr));
+  gap:16px;
+}
+.card{
+  background:white;
+  border-radius:var(--radius);
+  box-shadow:var(--shadow);
+  padding:18px 20px;
+}
+.card h2{margin-top:0;font-size:1.02rem;color:var(--blue-900);}
+.card label{display:block;margin:10px 0;font-size:.85rem;color:var(--gray-600);}
+.input-small{width:120px;padding:6px 8px;border:1px solid var(--gray-200);border-radius:6px;margin-top:4px;display:block;}
+.inline-form{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.inline-form input{flex:1 1 200px;padding:8px 10px;border:1px solid var(--gray-200);border-radius:6px;}
 
-    </div>
-  </section>
+.modal-overlay{
+  position:fixed;inset:0;
+  background:rgba(20,30,40,.45);
+  display:flex;align-items:center;justify-content:center;
+  padding:16px;
+  z-index:50;
+}
+.modal-overlay[hidden]{display:none;}
+.modal{
+  background:white;
+  border-radius:12px;
+  padding:22px 24px;
+  max-width:640px;
+  width:100%;
+  max-height:88vh;
+  overflow-y:auto;
+  box-shadow:0 10px 40px rgba(0,0,0,.25);
+}
+.modal h2{margin-top:0;color:var(--blue-900);}
+.form-grid{
+  display:grid;
+  grid-template-columns:1fr 1fr;
+  gap:10px 14px;
+}
+.form-grid label{font-size:.82rem;color:var(--gray-600);display:flex;flex-direction:column;gap:4px;}
+.form-grid label[hidden]{display:none;}
+.form-grid .span-2{grid-column:1/-1;}
+.form-grid input,.form-grid textarea{
+  padding:8px 10px;
+  border:1px solid var(--gray-200);
+  border-radius:6px;
+  font-size:16px;
+  font-family:inherit;
+}
+.checkbox-label{flex-direction:row !important;align-items:center;gap:8px !important;}
+.checkbox-label input{width:auto;}
+.modal-actions{
+  display:flex;
+  justify-content:space-between;
+  align-items:center;
+  margin-top:18px;
+  gap:10px;
+  flex-wrap:wrap;
+}
+.modal-actions-right{display:flex;gap:10px;flex-wrap:wrap;}
 
-</main>
+#modalPicker .modal{max-width:960px;}
+.picker-table-wrap{max-height:50vh;margin-top:10px;}
+.picker-table-wrap .data-table{min-width:560px;}
+.picker-table-wrap .data-table th:nth-child(1),
+.picker-table-wrap .data-table td:nth-child(1){width:90px;}
+.picker-table-wrap .data-table th:nth-child(2),
+.picker-table-wrap .data-table td:nth-child(2){width:28%;}
+.picker-table-wrap .data-table th:nth-child(4),
+.picker-table-wrap .data-table td:nth-child(4){width:110px;}
 
-<!-- ===================== MODAL: Nuovo/Modifica socio ===================== -->
-<div id="modalSocio" class="modal-overlay" hidden>
-  <div class="modal">
-    <h2 id="modalSocioTitle">Nuovo socio</h2>
-    <form id="formSocio">
-      <input type="hidden" id="fId">
-      <div class="form-grid">
-        <label>Tessera
-          <input type="text" id="fTessera">
-        </label>
-        <label class="span-2">Nome e cognome *
-          <input type="text" id="fNominativo" required>
-        </label>
-        <label>Data di nascita
-          <input type="date" id="fDataNascita">
-        </label>
-        <label>Luogo di nascita
-          <input type="text" id="fLuogoNascita">
-        </label>
-        <label class="span-2">Indirizzo
-          <input type="text" id="fIndirizzo">
-        </label>
-        <label>Data di iscrizione (entrata)
-          <input type="date" id="fDataEntrata">
-        </label>
-        <label class="checkbox-label">
-          <input type="checkbox" id="fAttivo">
-          Socio attivo quest'anno
-        </label>
-        <label class="campo-attivi">e-Mail
-          <input type="email" id="fEmail">
-        </label>
-        <label class="campo-attivi">Telefono
-          <input type="text" id="fTelefono">
-        </label>
-        <label class="campo-attivi">Quota (€)
-          <input type="number" step="0.01" id="fQuota">
-        </label>
-        <label class="checkbox-label campo-attivi">
-          <input type="checkbox" id="fPagamentoBonifico">
-          Pagato tramite bonifico
-        </label>
-        <label class="checkbox-label campo-attivi">
-          <input type="checkbox" id="fQuotaPagata">
-          Quota pagata
-        </label>
-        <label class="checkbox-label campo-attivi">
-          <input type="checkbox" id="fRicevutaConsegnata">
-          Ricevuta consegnata
-        </label>
-        <label class="span-2">Note
-          <textarea id="fNote" rows="2"></textarea>
-        </label>
-      </div>
-      <div class="modal-actions">
-        <button type="button" id="btnEliminaSocio" class="btn btn-danger-outline" hidden>Elimina socio</button>
-        <div class="modal-actions-right">
-          <button type="button" id="btnAnnullaSocio" class="btn">Annulla</button>
-          <button type="submit" class="btn btn-primary">Salva</button>
-        </div>
-      </div>
-    </form>
-  </div>
-</div>
+.toast{
+  position:fixed;
+  bottom:20px;left:50%;
+  transform:translateX(-50%);
+  background:var(--gray-800);
+  color:white;
+  padding:10px 18px;
+  border-radius:8px;
+  font-size:.88rem;
+  box-shadow:var(--shadow);
+  z-index:100;
+  max-width:calc(100% - 32px);
+  text-align:center;
+}
+.toast.error{background:var(--red-600);}
+.toast.success{background:var(--green-600);}
 
-<!-- ===================== MODAL: Scegli da storico ===================== -->
-<div id="modalPicker" class="modal-overlay" hidden>
-  <div class="modal">
-    <h2>Aggiungi socio attivo dallo storico</h2>
-    <input type="search" id="pickerSearch" placeholder="Cerca per nome o tessera..." class="search-box">
-    <div class="table-wrap picker-table-wrap">
-      <table class="data-table">
-        <thead><tr><th>Tessera</th><th>Socio</th><th>Indirizzo</th><th></th></tr></thead>
-        <tbody id="pickerBody"></tbody>
-      </table>
-    </div>
-    <div class="modal-actions">
-      <div class="modal-actions-right">
-        <button type="button" id="btnChiudiPicker" class="btn">Chiudi</button>
-      </div>
-    </div>
-  </div>
-</div>
+/* Pulsanti azione (ricarica/salva/estrazione) raccolti in basso a destra,
+   sempre raggiungibili indipendentemente dallo scroll o dalla scheda aperta. */
+.floating-actions{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+  z-index:40;
+}
+.floating-actions .btn{box-shadow:var(--shadow);}
 
-<div id="toast" class="toast" hidden></div>
+@media (max-width:640px){
+  main{padding:14px 12px 50px;}
+  .topbar{padding:12px 14px;}
+  .form-grid{grid-template-columns:1fr;}
+  .toolbar{align-items:stretch;}
+  .toolbar .search-box{flex-basis:100%;}
+  .result-count{margin-left:0;}
+  .modal{padding:18px 16px;}
+  .topbar-title .logo-img{height:34px;}
+  /* Su mobile i pulsanti restano nell'intestazione invece di galleggiare in
+     basso a destra, dove finirebbero sopra le tabelle durante lo scroll. */
+  .floating-actions{
+    position:static;
+    flex-direction:row;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    width:100%;
+    gap:6px;
+    margin-top:4px;
+  }
+  .floating-actions .btn{font-size:.76rem;padding:7px 10px;}
+}
 
-<script src="https://accounts.google.com/gsi/client" async defer></script>
-<script type="module" src="js/app.js"></script>
-</body>
-</html>
+@media (hover:none) and (pointer:coarse){
+  .btn, .tab-btn, .data-table th{min-height:40px;}
+}
