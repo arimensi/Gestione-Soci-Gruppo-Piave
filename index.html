@@ -14,9 +14,8 @@
     <span class="subtitle">Gestione soci</span>
   </div>
   <div class="sync-status" id="syncStatus">
-    <button id="btnEstrazioneAssicurazione" class="btn btn-small">Estrazione per assicurazione</button>
     <span id="syncStatusText" class="sync-text sync-offline">Non connesso a Google Drive</span>
-    <button id="btnSyncNow" class="btn btn-small" hidden>Salva su Drive</button>
+    <button id="tabBtnImpostazioni" class="tab-btn" data-tab="impostazioni">Accedi</button>
   </div>
 </header>
 
@@ -24,7 +23,6 @@
   <button class="tab-btn active" data-tab="storico">Lista soci</button>
   <button class="tab-btn" data-tab="attivi">Soci attivi <span id="attiviCountBadge" class="badge">0/90</span></button>
   <button class="tab-btn" data-tab="storicoattivi">Storico soci attivi</button>
-  <button class="tab-btn" data-tab="impostazioni" id="tabBtnImpostazioni">Accedi</button>
 </nav>
 
 <main>
@@ -80,19 +78,25 @@
             <th data-col="id">ID</th>
             <th data-col="tessera">Tessera</th>
             <th data-col="nominativo">Socio</th>
-            <th data-col="eta">Età</th>
+            <th data-col="dataNascita">Data nascita</th>
             <th data-col="indirizzo">Indirizzo</th>
             <th data-col="email">e-Mail</th>
             <th data-col="telefono">Telefono</th>
-            <th data-col="anzianita">Anz.</th>
-            <th data-col="quota">Quota</th>
             <th data-col="pagamentoBonifico">Bonifico</th>
             <th data-col="quotaPagata">Pagata</th>
             <th data-col="ricevutaConsegnata">Ricevuta</th>
+            <th data-col="quota">Quota</th>
             <th class="col-actions"></th>
           </tr>
         </thead>
         <tbody id="attiviBody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="10">Totale quote incassate</td>
+            <td id="attiviTotaleQuota"></td>
+            <td></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </section>
@@ -109,20 +113,26 @@
       <table id="tableStoricoAttivi" class="data-table">
         <thead>
           <tr>
-            <th>ID</th>
-            <th>Tessera</th>
-            <th>Socio</th>
-            <th>Anno nascita</th>
-            <th>Indirizzo</th>
-            <th>e-Mail</th>
-            <th>Telefono</th>
-            <th>Quota</th>
-            <th>Bonifico</th>
-            <th>Pagata</th>
-            <th>Ricevuta</th>
+            <th data-col="id">ID</th>
+            <th data-col="tessera">Tessera</th>
+            <th data-col="nominativo">Socio</th>
+            <th data-col="dataNascita">Data nascita</th>
+            <th data-col="indirizzo">Indirizzo</th>
+            <th data-col="email">e-Mail</th>
+            <th data-col="telefono">Telefono</th>
+            <th data-col="pagamentoBonifico">Bonifico</th>
+            <th data-col="quotaPagata">Pagata</th>
+            <th data-col="ricevutaConsegnata">Ricevuta</th>
+            <th data-col="quota">Quota</th>
           </tr>
         </thead>
         <tbody id="storicoAttiviBody"></tbody>
+        <tfoot>
+          <tr>
+            <td colspan="10">Totale quote incassate</td>
+            <td id="storicoAttiviTotaleQuota"></td>
+          </tr>
+        </tfoot>
       </table>
     </div>
   </section>
@@ -209,24 +219,24 @@
           <input type="checkbox" id="fAttivo">
           Socio attivo quest'anno
         </label>
-        <label>e-Mail
+        <label class="campo-attivi">e-Mail
           <input type="email" id="fEmail">
         </label>
-        <label>Telefono
+        <label class="campo-attivi">Telefono
           <input type="text" id="fTelefono">
         </label>
-        <label>Quota (€)
+        <label class="campo-attivi">Quota (€)
           <input type="number" step="0.01" id="fQuota">
         </label>
-        <label class="checkbox-label">
+        <label class="checkbox-label campo-attivi">
           <input type="checkbox" id="fPagamentoBonifico">
           Pagato tramite bonifico
         </label>
-        <label class="checkbox-label">
+        <label class="checkbox-label campo-attivi">
           <input type="checkbox" id="fQuotaPagata">
           Quota pagata
         </label>
-        <label class="checkbox-label">
+        <label class="checkbox-label campo-attivi">
           <input type="checkbox" id="fRicevutaConsegnata">
           Ricevuta consegnata
         </label>
@@ -262,6 +272,11 @@
       </div>
     </div>
   </div>
+</div>
+
+<div id="floatingActions" class="floating-actions">
+  <button id="btnEstrazioneAssicurazione" class="btn btn-small">Estrazione per assicurazione</button>
+  <button id="btnSyncNow" class="btn btn-small btn-primary" hidden>Salva su Drive</button>
 </div>
 
 <div id="toast" class="toast" hidden></div>
