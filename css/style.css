@@ -152,14 +152,11 @@ main{padding:18px 20px 60px;max-width:1600px;margin:0 auto;}
   border-radius:var(--radius);
   box-shadow:var(--shadow);
 }
-/* width:max-content fa si' che la tabella si restringa al proprio contenuto
-   (colonne vicine, senza spazi vuoti forzati) invece di allargarsi sempre a
-   riempire tutto il contenitore; se il contenuto e' piu' largo del
-   contenitore scorre in orizzontale (vedi .table-wrap). */
 .data-table{
-  width:max-content;
+  width:100%;
   border-collapse:collapse;
   font-size:.86rem;
+  min-width:900px;
 }
 .data-table th{
   text-align:left;
@@ -180,11 +177,13 @@ main{padding:18px 20px 60px;max-width:1600px;margin:0 auto;}
   border-bottom:1px solid var(--gray-100);
   vertical-align:top;
   white-space:nowrap;
+  overflow:hidden;
+  text-overflow:ellipsis;
 }
 .data-table tbody tr:hover{background:var(--gray-50);}
 .data-table tbody tr.row-note{background:#fff8ea;}
 .data-table tbody tr.row-note:hover{background:#fff1d4;}
-.col-actions{width:1%;white-space:nowrap;}
+.col-actions{width:1%;white-space:nowrap;overflow:visible;text-overflow:clip;}
 .row-note-icon{color:var(--amber-600);margin-right:4px;cursor:help;}
 .check-yes{color:var(--green-600);font-weight:700;}
 .check-no{color:var(--gray-400);}
@@ -197,16 +196,51 @@ main{padding:18px 20px 60px;max-width:1600px;margin:0 auto;}
   white-space:nowrap;
 }
 
-/* Nessuna colonna va mai a capo (la larghezza segue il contenuto, nessuna
-   percentuale fissa) tranne l'Indirizzo, l'unico campo che puo' contenere
-   testo lungo a sufficienza da richiederlo. Se le altre colonne non entrano
-   tutte, la tabella scorre in orizzontale dentro .table-wrap. */
-#tableStorico th:nth-child(6),#tableStorico td:nth-child(6),
-#tableAttivi th:nth-child(5),#tableAttivi td:nth-child(5),
-#tableStoricoAttivi th:nth-child(5),#tableStoricoAttivi td:nth-child(5),
-.picker-table-wrap .data-table th:nth-child(3),.picker-table-wrap .data-table td:nth-child(3){
-  white-space:normal;
-}
+/* Colonne a larghezza fissa (percentuali che sommano a 100%): la tabella
+   riempie esattamente lo spazio disponibile, senza scorrimento orizzontale.
+   Il testo troppo lungo viene troncato con i puntini di sospensione (vedi
+   .data-table td) tranne che nell'Indirizzo, l'unico campo che puo' andare
+   a capo invece di troncare. */
+#tableStorico{table-layout:fixed;}
+#tableStorico th:nth-child(1),#tableStorico td:nth-child(1){width:6%;}
+#tableStorico th:nth-child(2),#tableStorico td:nth-child(2){width:11%;}
+#tableStorico th:nth-child(3),#tableStorico td:nth-child(3){width:3%;}
+#tableStorico th:nth-child(4),#tableStorico td:nth-child(4){width:7%;}
+#tableStorico th:nth-child(5),#tableStorico td:nth-child(5){width:8%;}
+#tableStorico th:nth-child(6),#tableStorico td:nth-child(6){width:24%;white-space:normal;overflow:visible;text-overflow:clip;}
+#tableStorico th:nth-child(7),#tableStorico td:nth-child(7){width:11%;}
+#tableStorico th:nth-child(8),#tableStorico td:nth-child(8){width:8%;}
+#tableStorico th:nth-child(9),#tableStorico td:nth-child(9){width:7%;}
+#tableStorico th:nth-child(10),#tableStorico td:nth-child(10){width:4%;}
+#tableStorico th:nth-child(11),#tableStorico td:nth-child(11){width:5%;}
+#tableStorico th:nth-child(12),#tableStorico td:nth-child(12){width:6%;}
+
+#tableAttivi{table-layout:fixed;}
+#tableAttivi th:nth-child(1),#tableAttivi td:nth-child(1){width:4%;}
+#tableAttivi th:nth-child(2),#tableAttivi td:nth-child(2){width:7%;}
+#tableAttivi th:nth-child(3),#tableAttivi td:nth-child(3){width:13%;}
+#tableAttivi th:nth-child(4),#tableAttivi td:nth-child(4){width:8%;}
+#tableAttivi th:nth-child(5),#tableAttivi td:nth-child(5){width:16%;white-space:normal;overflow:visible;text-overflow:clip;}
+#tableAttivi th:nth-child(6),#tableAttivi td:nth-child(6){width:13%;}
+#tableAttivi th:nth-child(7),#tableAttivi td:nth-child(7){width:9%;}
+#tableAttivi th:nth-child(8),#tableAttivi td:nth-child(8){width:5%;}
+#tableAttivi th:nth-child(9),#tableAttivi td:nth-child(9){width:5%;}
+#tableAttivi th:nth-child(10),#tableAttivi td:nth-child(10){width:6%;}
+#tableAttivi th:nth-child(11),#tableAttivi td:nth-child(11){width:5%;}
+#tableAttivi th:nth-child(12),#tableAttivi td:nth-child(12){width:9%;}
+
+#tableStoricoAttivi{table-layout:fixed;}
+#tableStoricoAttivi th:nth-child(1),#tableStoricoAttivi td:nth-child(1){width:4%;}
+#tableStoricoAttivi th:nth-child(2),#tableStoricoAttivi td:nth-child(2){width:8%;}
+#tableStoricoAttivi th:nth-child(3),#tableStoricoAttivi td:nth-child(3){width:15%;}
+#tableStoricoAttivi th:nth-child(4),#tableStoricoAttivi td:nth-child(4){width:9%;}
+#tableStoricoAttivi th:nth-child(5),#tableStoricoAttivi td:nth-child(5){width:19%;white-space:normal;overflow:visible;text-overflow:clip;}
+#tableStoricoAttivi th:nth-child(6),#tableStoricoAttivi td:nth-child(6){width:15%;}
+#tableStoricoAttivi th:nth-child(7),#tableStoricoAttivi td:nth-child(7){width:10%;}
+#tableStoricoAttivi th:nth-child(8),#tableStoricoAttivi td:nth-child(8){width:5%;}
+#tableStoricoAttivi th:nth-child(9),#tableStoricoAttivi td:nth-child(9){width:5%;}
+#tableStoricoAttivi th:nth-child(10),#tableStoricoAttivi td:nth-child(10){width:5%;}
+#tableStoricoAttivi th:nth-child(11),#tableStoricoAttivi td:nth-child(11){width:5%;}
 
 .settings-grid{
   display:grid;
@@ -338,4 +372,3 @@ main{padding:18px 20px 60px;max-width:1600px;margin:0 auto;}
 @media (hover:none) and (pointer:coarse){
   .btn, .tab-btn, .data-table th{min-height:40px;}
 }
- 
