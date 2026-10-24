@@ -46,6 +46,13 @@ export function annoNascita(dataISO) {
   return dataISO.split("-")[0];
 }
 
+/** Prossimo numero di tessera libero: il piu' alto tra quelli esistenti + 1. */
+export function prossimoNumeroTessera(soci) {
+  const numeri = soci.map((s) => parseInt(s.tessera, 10)).filter((n) => !Number.isNaN(n));
+  const massimo = numeri.length ? Math.max(...numeri) : 0;
+  return String(massimo + 1);
+}
+
 /** Restituisce l'insieme dei numeri di tessera (non vuoti) usati da piu' di un socio. */
 export function tessereDuplicate(soci) {
   const conteggio = {};
