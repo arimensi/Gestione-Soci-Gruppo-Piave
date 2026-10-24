@@ -200,15 +200,16 @@ main{padding:18px 20px 60px;max-width:1600px;margin:0 auto;}
    capo invece di sforare. */
 #tableStorico{table-layout:fixed;}
 #tableStorico th:nth-child(1),#tableStorico td:nth-child(1){width:7%;}
-#tableStorico th:nth-child(2),#tableStorico td:nth-child(2){width:15%;white-space:normal;}
-#tableStorico th:nth-child(3),#tableStorico td:nth-child(3){width:5%;}
-#tableStorico th:nth-child(4),#tableStorico td:nth-child(4){width:9%;}
-#tableStorico th:nth-child(5),#tableStorico td:nth-child(5){width:11%;white-space:normal;}
-#tableStorico th:nth-child(6),#tableStorico td:nth-child(6){width:26%;white-space:normal;}
+#tableStorico th:nth-child(2),#tableStorico td:nth-child(2){width:13%;white-space:normal;}
+#tableStorico th:nth-child(3),#tableStorico td:nth-child(3){width:4%;}
+#tableStorico th:nth-child(4),#tableStorico td:nth-child(4){width:8%;}
+#tableStorico th:nth-child(5),#tableStorico td:nth-child(5){width:10%;white-space:normal;}
+#tableStorico th:nth-child(6),#tableStorico td:nth-child(6){width:25%;white-space:normal;}
 #tableStorico th:nth-child(7),#tableStorico td:nth-child(7){width:9%;}
-#tableStorico th:nth-child(8),#tableStorico td:nth-child(8){width:6%;}
+#tableStorico th:nth-child(8),#tableStorico td:nth-child(8){width:8%;}
 #tableStorico th:nth-child(9),#tableStorico td:nth-child(9){width:5%;}
-#tableStorico th:nth-child(10),#tableStorico td:nth-child(10){width:7%;}
+#tableStorico th:nth-child(10),#tableStorico td:nth-child(10){width:5%;}
+#tableStorico th:nth-child(11),#tableStorico td:nth-child(11){width:6%;}
 
 /* Soci attivi / Storico soci attivi: stesso approccio, per evitare lo
    scorrimento laterale anche con 11-12 colonne (email, indirizzo, telefono
