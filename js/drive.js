@@ -1,23 +1,10 @@
 // Integrazione con Google Drive: autenticazione (Google Identity Services)
 // e lettura/scrittura del file JSON condiviso usato come "database".
 //
-// IMPORTANTE: prima di usare l'app vera e propria, sostituisci GOOGLE_CLIENT_ID
-// con il Client ID OAuth creato su Google Cloud Console (vedi README.md).
+// GOOGLE_CLIENT_ID, DRIVE_FILE_ID e ADMIN_EMAIL si configurano in config.js,
+// non qui: questo file contiene solo la logica, non va quasi mai toccato.
 
-export const GOOGLE_CLIENT_ID = "223079985709-imr1aidpeoc3cmh1p3m4iv6ast93fbes.apps.googleusercontent.com";
-
-// ID del file soci su Google Drive: una volta creato il file "canonico"
-// (pulsante "Crea nuovo file su Drive", da fare una volta sola), incolla qui
-// il suo ID. Da quel momento l'app si collega SEMPRE automaticamente a
-// questo file per chiunque acceda, senza bisogno di "Connetti a file
-// esistente". Lascia vuoto per il comportamento precedente (file scelto
-// manualmente, salvato solo nel browser di chi lo collega).
-export const DRIVE_FILE_ID = "1_zJSxSsA-nfg_VnjsskauJOHqj1Iwzlo";
-
-// Se impostata, la scheda "Impostazioni / Sync" (connessione Drive,
-// importazione dati, anno sociale, backup) e' visibile solo a questo
-// indirizzo email Google. Lascia vuoto per renderla visibile a tutti.
-export const ADMIN_EMAIL = "gruppopiave.internal@gmail.com";
+import { GOOGLE_CLIENT_ID, DRIVE_FILE_ID } from "./config.js";
 
 // Scope "drive" completo: necessario perche' l'app si collega tramite un
 // ID file incollato a mano (non tramite il selettore ufficiale di Google),
@@ -71,7 +58,7 @@ export function initGoogleAuth(onChange) {
     return;
   }
   if (GOOGLE_CLIENT_ID.startsWith("INSERISCI_QUI")) {
-    console.warn("GOOGLE_CLIENT_ID non configurato in js/drive.js");
+    console.warn("GOOGLE_CLIENT_ID non configurato in js/config.js");
     return;
   }
   tokenClient = google.accounts.oauth2.initTokenClient({
@@ -92,7 +79,7 @@ export function initGoogleAuth(onChange) {
 export function signIn() {
   if (!tokenClient) {
     alert(
-      "Configurazione Google non completa.\n\nApri js/drive.js e inserisci il GOOGLE_CLIENT_ID (vedi README.md per le istruzioni)."
+      "Configurazione Google non completa.\n\nApri js/config.js e inserisci il GOOGLE_CLIENT_ID (vedi README.md per le istruzioni)."
     );
     return;
   }
