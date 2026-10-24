@@ -3,16 +3,16 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Soci - Gruppo Piave</title>
+<title>Soci - Gruppo Aeromodellistico Piave</title>
 <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 
 <header class="topbar">
   <div class="topbar-title">
-    <img src="assets/logo-gruppo-piave.png" alt="Logo Gruppo Piave" class="logo-img">
+    <img src="assets/logo-gruppo-piave.png" alt="Logo Gruppo Aeromodellistico Piave" class="logo-img">
     <div>
-      <h1>Gruppo Piave</h1>
+      <h1>Gruppo Aeromodellistico Piave</h1>
       <span class="subtitle">Gestione soci</span>
     </div>
   </div>
@@ -58,6 +58,7 @@
             <th data-col="dataNascita">Nato il</th>
             <th data-col="luogoNascita">A</th>
             <th data-col="indirizzo">Indirizzo</th>
+            <th data-col="email">e-Mail</th>
             <th data-col="telefono">Telefono</th>
             <th data-col="dataEntrata">Entrato il</th>
             <th data-col="anzianita">Anzianità</th>
@@ -92,16 +93,17 @@
             <th data-col="telefono">Telefono</th>
             <th data-col="pagamentoBonifico">Bonifico</th>
             <th data-col="contanti">Contanti</th>
-            <th data-col="quotaPagata">Pagata</th>
             <th data-col="quota">Quota</th>
+            <th data-col="quotaPagata">Pagata</th>
             <th class="col-actions"></th>
           </tr>
         </thead>
         <tbody id="attiviBody"></tbody>
         <tfoot>
           <tr>
-            <td colspan="10">Totale quote incassate</td>
+            <td colspan="9">Totale quote incassate</td>
             <td id="attiviTotaleQuota"></td>
+            <td></td>
             <td></td>
           </tr>
         </tfoot>
@@ -130,15 +132,16 @@
             <th data-col="telefono">Telefono</th>
             <th data-col="pagamentoBonifico">Bonifico</th>
             <th data-col="contanti">Contanti</th>
-            <th data-col="quotaPagata">Pagata</th>
             <th data-col="quota">Quota</th>
+            <th data-col="quotaPagata">Pagata</th>
           </tr>
         </thead>
         <tbody id="storicoAttiviBody"></tbody>
         <tfoot>
           <tr>
-            <td colspan="10">Totale quote incassate</td>
+            <td colspan="9">Totale quote incassate</td>
             <td id="storicoAttiviTotaleQuota"></td>
+            <td></td>
           </tr>
         </tfoot>
       </table>
@@ -227,10 +230,10 @@
           <input type="checkbox" id="fAttivo">
           Socio attivo quest'anno
         </label>
-        <label class="campo-attivi">e-Mail
+        <label>e-Mail
           <input type="email" id="fEmail">
         </label>
-        <label class="campo-attivi">Telefono
+        <label>Telefono
           <input type="text" id="fTelefono">
         </label>
         <label class="checkbox-label campo-attivi">
@@ -241,12 +244,12 @@
           <input type="checkbox" id="fContanti">
           Pagato in contanti
         </label>
+        <label class="campo-attivi">Quota (€)
+          <input type="number" step="0.01" id="fQuota">
+        </label>
         <label class="checkbox-label campo-attivi">
           <input type="checkbox" id="fQuotaPagata">
           Quota pagata
-        </label>
-        <label class="campo-attivi">Quota (€)
-          <input type="number" step="0.01" id="fQuota">
         </label>
         <label class="span-2">Note
           <textarea id="fNote" rows="2"></textarea>
