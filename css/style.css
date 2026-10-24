@@ -152,11 +152,14 @@ main{padding:18px 20px 60px;max-width:1600px;margin:0 auto;}
   border-radius:var(--radius);
   box-shadow:var(--shadow);
 }
+/* width:max-content fa si' che la tabella si restringa al proprio contenuto
+   (colonne vicine, senza spazi vuoti forzati) invece di allargarsi sempre a
+   riempire tutto il contenitore; se il contenuto e' piu' largo del
+   contenitore scorre in orizzontale (vedi .table-wrap). */
 .data-table{
-  width:100%;
+  width:max-content;
   border-collapse:collapse;
   font-size:.86rem;
-  min-width:900px;
 }
 .data-table th{
   text-align:left;
