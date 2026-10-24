@@ -22,4 +22,5 @@ export const ADMIN_EMAIL = "gruppopiave.internal@gmail.com";
 export const EDITOR_EMAILS = [
   "gruppopiave.internal@gmail.com",
   "michaellonghi98@gmail.com",
+  "rimensidamiano@gmail.com",
 ];
