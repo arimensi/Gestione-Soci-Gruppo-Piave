@@ -21,4 +21,5 @@ export const ADMIN_EMAIL = "gruppopiave.internal@gmail.com";
 // modifica, eliminazione e chiusura anno restano nascosti.
 export const EDITOR_EMAILS = [
   "gruppopiave.internal@gmail.com",
+  "michaellonghi98@gmail.com",
 ];
