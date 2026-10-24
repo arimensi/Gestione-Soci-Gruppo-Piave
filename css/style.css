@@ -16,6 +16,7 @@
   --shadow:0 2px 10px rgba(16,24,40,.08);
 }
 *{box-sizing:border-box;}
+html{-webkit-text-size-adjust:100%;}
 body{
   margin:0;
   font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,Helvetica,Arial,sans-serif;
@@ -33,13 +34,30 @@ body{
   flex-wrap:wrap;
   gap:10px;
 }
+.topbar-title{display:flex;align-items:center;gap:10px;}
+.topbar-title .logo-img{height:44px;width:auto;display:block;}
 .topbar-title h1{margin:0;font-size:1.15rem;}
 .topbar-title .subtitle{font-size:.8rem;opacity:.8;}
-.sync-status{display:flex;align-items:center;gap:10px;}
+.sync-status{display:flex;align-items:center;gap:10px;flex-wrap:wrap;}
 .sync-text{font-size:.85rem;padding:4px 10px;border-radius:20px;}
 .sync-online{background:rgba(31,138,76,.25);color:#b9f3cd;}
 .sync-offline{background:rgba(255,255,255,.12);color:#e8ecf0;}
 .sync-pending{background:rgba(181,121,10,.3);color:#ffe3ad;}
+
+/* Pulsante Accedi/Impostazioni spostato nell'angolo in alto a destra
+   dell'intestazione: stile "pillola" invece del look da scheda, per
+   distinguerlo visivamente dalle schede di navigazione vere e proprie. */
+.topbar .tab-btn{
+  background:white;
+  color:var(--blue-900);
+  border:none;
+  border-radius:20px;
+  padding:7px 16px;
+  font-size:.85rem;
+  border-bottom:none;
+}
+.topbar .tab-btn:hover{background:#dcebf7;color:var(--blue-900);}
+.topbar .tab-btn.active{background:var(--blue-500);color:white;font-weight:600;border-bottom:none;}
 
 .tabs{
   display:flex;
@@ -48,6 +66,7 @@ body{
   padding:0 16px;
   border-bottom:1px solid var(--gray-200);
   overflow-x:auto;
+  -webkit-overflow-scrolling:touch;
 }
 .tab-btn{
   border:none;
@@ -58,6 +77,7 @@ body{
   color:var(--gray-600);
   border-bottom:3px solid transparent;
   white-space:nowrap;
+  flex:0 0 auto;
 }
 .tab-btn:hover{color:var(--blue-700);}
 .tab-btn.active{color:var(--blue-900);border-bottom-color:var(--blue-500);font-weight:600;}
@@ -73,7 +93,7 @@ body{
 .badge.badge-full{background:var(--red-600);color:white;}
 .badge.badge-near{background:var(--amber-600);color:white;}
 
-main{padding:18px 20px 60px;max-width:1400px;margin:0 auto;}
+main{padding:18px 20px 60px;max-width:1600px;margin:0 auto;}
 .tab-panel{display:none;}
 .tab-panel.active{display:block;}
 
@@ -113,6 +133,7 @@ main{padding:18px 20px 60px;max-width:1400px;margin:0 auto;}
   color:var(--gray-800);
   cursor:pointer;
   font-size:.88rem;
+  white-space:nowrap;
 }
 .btn:hover{border-color:var(--blue-500);color:var(--blue-700);}
 .btn-primary{background:var(--blue-700);border-color:var(--blue-700);color:white;}
@@ -124,6 +145,9 @@ main{padding:18px 20px 60px;max-width:1400px;margin:0 auto;}
 
 .table-wrap{
   overflow-x:auto;
+  overflow-y:auto;
+  max-height:calc(100vh - 230px);
+  -webkit-overflow-scrolling:touch;
   background:white;
   border-radius:var(--radius);
   box-shadow:var(--shadow);
@@ -152,6 +176,7 @@ main{padding:18px 20px 60px;max-width:1400px;margin:0 auto;}
   padding:8px 12px;
   border-bottom:1px solid var(--gray-100);
   vertical-align:top;
+  white-space:nowrap;
 }
 .data-table tbody tr:hover{background:var(--gray-50);}
 .data-table tbody tr.row-note{background:#fff8ea;}
@@ -160,6 +185,25 @@ main{padding:18px 20px 60px;max-width:1400px;margin:0 auto;}
 .row-note-icon{color:var(--amber-600);margin-right:4px;cursor:help;}
 .check-yes{color:var(--green-600);font-weight:700;}
 .check-no{color:var(--gray-400);}
+
+.data-table tfoot td{
+  font-weight:700;
+  background:var(--blue-100);
+  color:var(--blue-900);
+  border-top:2px solid var(--blue-500);
+  white-space:nowrap;
+}
+
+/* Nessuna colonna va mai a capo (la larghezza segue il contenuto, nessuna
+   percentuale fissa) tranne l'Indirizzo, l'unico campo che puo' contenere
+   testo lungo a sufficienza da richiederlo. Se le altre colonne non entrano
+   tutte, la tabella scorre in orizzontale dentro .table-wrap. */
+#tableStorico th:nth-child(6),#tableStorico td:nth-child(6),
+#tableAttivi th:nth-child(5),#tableAttivi td:nth-child(5),
+#tableStoricoAttivi th:nth-child(5),#tableStoricoAttivi td:nth-child(5),
+.picker-table-wrap .data-table th:nth-child(3),.picker-table-wrap .data-table td:nth-child(3){
+  white-space:normal;
+}
 
 .settings-grid{
   display:grid;
@@ -175,8 +219,8 @@ main{padding:18px 20px 60px;max-width:1400px;margin:0 auto;}
 .card h2{margin-top:0;font-size:1.02rem;color:var(--blue-900);}
 .card label{display:block;margin:10px 0;font-size:.85rem;color:var(--gray-600);}
 .input-small{width:120px;padding:6px 8px;border:1px solid var(--gray-200);border-radius:6px;margin-top:4px;display:block;}
-.inline-form{display:flex;gap:8px;margin-top:10px;}
-.inline-form input{flex:1;padding:8px 10px;border:1px solid var(--gray-200);border-radius:6px;}
+.inline-form{display:flex;gap:8px;margin-top:10px;flex-wrap:wrap;}
+.inline-form input{flex:1 1 200px;padding:8px 10px;border:1px solid var(--gray-200);border-radius:6px;}
 
 .modal-overlay{
   position:fixed;inset:0;
@@ -203,12 +247,13 @@ main{padding:18px 20px 60px;max-width:1400px;margin:0 auto;}
   gap:10px 14px;
 }
 .form-grid label{font-size:.82rem;color:var(--gray-600);display:flex;flex-direction:column;gap:4px;}
+.form-grid label[hidden]{display:none;}
 .form-grid .span-2{grid-column:1/-1;}
 .form-grid input,.form-grid textarea{
   padding:8px 10px;
   border:1px solid var(--gray-200);
   border-radius:6px;
-  font-size:.9rem;
+  font-size:16px;
   font-family:inherit;
 }
 .checkbox-label{flex-direction:row !important;align-items:center;gap:8px !important;}
@@ -219,9 +264,19 @@ main{padding:18px 20px 60px;max-width:1400px;margin:0 auto;}
   align-items:center;
   margin-top:18px;
   gap:10px;
+  flex-wrap:wrap;
 }
-.modal-actions-right{display:flex;gap:10px;}
+.modal-actions-right{display:flex;gap:10px;flex-wrap:wrap;}
+
+#modalPicker .modal{max-width:960px;}
 .picker-table-wrap{max-height:50vh;margin-top:10px;}
+.picker-table-wrap .data-table{min-width:560px;}
+.picker-table-wrap .data-table th:nth-child(1),
+.picker-table-wrap .data-table td:nth-child(1){width:90px;}
+.picker-table-wrap .data-table th:nth-child(2),
+.picker-table-wrap .data-table td:nth-child(2){width:28%;}
+.picker-table-wrap .data-table th:nth-child(4),
+.picker-table-wrap .data-table td:nth-child(4){width:110px;}
 
 .toast{
   position:fixed;
@@ -234,11 +289,49 @@ main{padding:18px 20px 60px;max-width:1400px;margin:0 auto;}
   font-size:.88rem;
   box-shadow:var(--shadow);
   z-index:100;
+  max-width:calc(100% - 32px);
+  text-align:center;
 }
 .toast.error{background:var(--red-600);}
 .toast.success{background:var(--green-600);}
 
+/* Pulsanti azione (ricarica/salva/estrazione) raccolti in basso a destra,
+   sempre raggiungibili indipendentemente dallo scroll o dalla scheda aperta. */
+.floating-actions{
+  position:fixed;
+  bottom:20px;
+  right:20px;
+  display:flex;
+  flex-direction:column;
+  align-items:flex-end;
+  gap:8px;
+  z-index:40;
+}
+.floating-actions .btn{box-shadow:var(--shadow);}
+
 @media (max-width:640px){
+  main{padding:14px 12px 50px;}
+  .topbar{padding:12px 14px;}
   .form-grid{grid-template-columns:1fr;}
-  .data-table{min-width:700px;}
+  .toolbar{align-items:stretch;}
+  .toolbar .search-box{flex-basis:100%;}
+  .result-count{margin-left:0;}
+  .modal{padding:18px 16px;}
+  .topbar-title .logo-img{height:34px;}
+  /* Su mobile i pulsanti restano nell'intestazione invece di galleggiare in
+     basso a destra, dove finirebbero sopra le tabelle durante lo scroll. */
+  .floating-actions{
+    position:static;
+    flex-direction:row;
+    flex-wrap:wrap;
+    justify-content:flex-end;
+    width:100%;
+    gap:6px;
+    margin-top:4px;
+  }
+  .floating-actions .btn{font-size:.76rem;padding:7px 10px;}
+}
+
+@media (hover:none) and (pointer:coarse){
+  .btn, .tab-btn, .data-table th{min-height:40px;}
 }
