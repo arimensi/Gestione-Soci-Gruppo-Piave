@@ -229,6 +229,13 @@ function annoStoricoSelezionato() {
   return state.storicoAttivi.find((a) => a.anno === v) || null;
 }
 
+function filteredStoricoAttivi() {
+  const archivio = annoStoricoSelezionato();
+  if (!archivio) return [];
+  const list = archivio.soci.filter((s) => matchesSearch(s, storicoAttiviState.search));
+  return sortSoci(list, storicoAttiviState.sort);
+}
+
 function renderStoricoAttivi() {
   popolaSelettoreAnniStoricoAttivi();
   const archivio = annoStoricoSelezionato();
@@ -248,8 +255,7 @@ function renderStoricoAttivi() {
   }
   hint.textContent = "";
 
-  let list = archivio.soci.filter((s) => matchesSearch(s, storicoAttiviState.search));
-  list = sortSoci(list, storicoAttiviState.sort);
+  const list = filteredStoricoAttivi();
 
   body.innerHTML = list
     .map((s, idx) => {
@@ -668,6 +674,17 @@ aggiungiPulsantiExport(
   attiviColumns,
   "soci-attivi-gruppo-piave",
   () => `Soci attivi ${state.meta.annoAttivo} - Gruppo Aeromodellistico Piave`,
+  (rows) => ({
+    label: "Totale quote incassate",
+    value: "€ " + rows.reduce((sum, s) => sum + (Number(s.quota) || 0), 0).toFixed(2),
+  })
+);
+aggiungiPulsantiExport(
+  "storicoAttiviCount",
+  filteredStoricoAttivi,
+  attiviColumns,
+  "storico-soci-attivi-gruppo-piave",
+  () => `Storico soci attivi ${annoStoricoSelezionato()?.anno ?? ""} - Gruppo Aeromodellistico Piave`,
   (rows) => ({
     label: "Totale quote incassate",
     value: "€ " + rows.reduce((sum, s) => sum + (Number(s.quota) || 0), 0).toFixed(2),
