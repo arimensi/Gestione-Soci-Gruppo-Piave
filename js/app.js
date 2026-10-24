@@ -98,8 +98,8 @@ function getSortValue(socio, col) {
       return socio.pagamentoBonifico ? 1 : 0;
     case "quotaPagata":
       return socio.quotaPagata ? 1 : 0;
-    case "ricevutaConsegnata":
-      return socio.ricevutaConsegnata ? 1 : 0;
+    case "contanti":
+      return socio.contanti ? 1 : 0;
     default:
       return socio[col];
   }
@@ -146,6 +146,7 @@ function renderStorico() {
         <td>${formatDataIt(s.dataNascita)}</td>
         <td>${escapeHtml(s.luogoNascita)}</td>
         <td>${escapeHtml(s.indirizzo)}</td>
+        <td>${escapeHtml(s.telefono)}</td>
         <td>${formatDataIt(s.dataEntrata)}</td>
         <td>${anz ?? ""}</td>
         <td>${s.attivo ? '<span class="check-yes">&check;</span>' : '<span class="check-no">—</span>'}</td>
@@ -178,8 +179,8 @@ function renderAttivi() {
         <td>${escapeHtml(s.email)}</td>
         <td>${escapeHtml(s.telefono)}</td>
         <td>${check(s.pagamentoBonifico)}</td>
+        <td>${check(s.contanti)}</td>
         <td>${check(s.quotaPagata)}</td>
-        <td>${check(s.ricevutaConsegnata)}</td>
         <td>${s.quota != null ? "€ " + Number(s.quota).toFixed(2) : ""}</td>
         <td class="col-actions">
           <button class="btn btn-small btn-edit">Modifica</button>
@@ -262,8 +263,8 @@ function renderStoricoAttivi() {
         <td>${escapeHtml(s.email)}</td>
         <td>${escapeHtml(s.telefono)}</td>
         <td>${check(s.pagamentoBonifico)}</td>
+        <td>${check(s.contanti)}</td>
         <td>${check(s.quotaPagata)}</td>
-        <td>${check(s.ricevutaConsegnata)}</td>
         <td>${s.quota != null ? "€ " + Number(s.quota).toFixed(2) : ""}</td>
       </tr>`;
     })
@@ -364,8 +365,8 @@ function openModalSocio(id, context = "storico") {
   document.getElementById("fTelefono").value = s?.telefono || "";
   document.getElementById("fQuota").value = s?.quota ?? "";
   document.getElementById("fPagamentoBonifico").checked = !!s?.pagamentoBonifico;
+  document.getElementById("fContanti").checked = !!s?.contanti;
   document.getElementById("fQuotaPagata").checked = !!s?.quotaPagata;
-  document.getElementById("fRicevutaConsegnata").checked = !!s?.ricevutaConsegnata;
   document.getElementById("fNote").value = s?.note || "";
   document.getElementById("btnEliminaSocio").hidden = !s;
   // I campi relativi a contatti/pagamento si vedono solo aprendo la scheda
@@ -405,8 +406,8 @@ formSocio.addEventListener("submit", (e) => {
     telefono: document.getElementById("fTelefono").value.trim(),
     quota: quotaRaw === "" ? null : Number(quotaRaw),
     pagamentoBonifico: document.getElementById("fPagamentoBonifico").checked,
+    contanti: document.getElementById("fContanti").checked,
     quotaPagata: document.getElementById("fQuotaPagata").checked,
-    ricevutaConsegnata: document.getElementById("fRicevutaConsegnata").checked,
     note: document.getElementById("fNote").value.trim(),
   };
   if (!socio.nominativo) {
@@ -478,6 +479,10 @@ document.getElementById("pickerBody").addEventListener("click", (e) => {
     if (!confirm(`Hai gia' raggiunto il limite di ${limite} soci attivi.\nAggiungere comunque ${s.nominativo}?`)) return;
   }
   s.attivo = true;
+  s.pagamentoBonifico = false;
+  s.contanti = false;
+  s.quotaPagata = false;
+  s.quota = null;
   markDirty();
   renderAll();
   renderPicker();
@@ -528,8 +533,8 @@ function attiviColumns() {
     { label: "e-Mail", value: (s) => s.email },
     { label: "Telefono", value: (s) => s.telefono },
     { label: "Bonifico", value: (s) => (s.pagamentoBonifico ? "si" : "no") },
+    { label: "Contanti", value: (s) => (s.contanti ? "si" : "no") },
     { label: "Quota pagata", value: (s) => (s.quotaPagata ? "si" : "no") },
-    { label: "Ricevuta consegnata", value: (s) => (s.ricevutaConsegnata ? "si" : "no") },
     { label: "Quota", value: (s) => s.quota },
   ];
 }
