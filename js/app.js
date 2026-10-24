@@ -84,6 +84,13 @@ document.getElementById("tabBtnImpostazioni").addEventListener("click", () => sw
 // sempre ricalcolato dal vivo, non letto dal testo salvato.
 const PREFISSO_NOTA_DUPLICATO = /^Numero tessera duplicato nello storico: verificare(; )?/;
 
+// Mostra il testo completo al passaggio del mouse per i campi che, nelle
+// colonne a larghezza fissa, possono venire troncati con i puntini di
+// sospensione (vedi overflow:hidden in style.css).
+function tdTitle(v) {
+  return v ? ` title="${escapeAttr(v)}"` : "";
+}
+
 function notaEffettiva(s, duplicati) {
   const resto = (s.note || "").replace(PREFISSO_NOTA_DUPLICATO, "").trim();
   const parti = [];
@@ -163,13 +170,13 @@ function renderStorico() {
       const noteIcon = nota ? `<span class="row-note-icon" title="${escapeAttr(nota)}">⚠</span>` : "";
       return `<tr data-id="${s.id}" class="${nota ? "row-note" : ""}">
         <td>${escapeHtml(s.tessera)}</td>
-        <td>${noteIcon}${escapeHtml(s.nominativo)}</td>
+        <td${tdTitle(s.nominativo)}>${noteIcon}${escapeHtml(s.nominativo)}</td>
         <td>${eta ?? ""}</td>
         <td>${formatDataIt(s.dataNascita)}</td>
-        <td>${escapeHtml(s.luogoNascita)}</td>
+        <td${tdTitle(s.luogoNascita)}>${escapeHtml(s.luogoNascita)}</td>
         <td>${escapeHtml(s.indirizzo)}</td>
-        <td>${escapeHtml(s.email)}</td>
-        <td>${escapeHtml(s.telefono)}</td>
+        <td${tdTitle(s.email)}>${escapeHtml(s.email)}</td>
+        <td${tdTitle(s.telefono)}>${escapeHtml(s.telefono)}</td>
         <td>${formatDataIt(s.dataEntrata)}</td>
         <td>${anz ?? ""}</td>
         <td>${s.attivo ? '<span class="check-yes">&check;</span>' : '<span class="check-no">—</span>'}</td>
@@ -200,11 +207,11 @@ function renderAttivi() {
       return `<tr data-id="${s.id}">
         <td>${idx + 1}</td>
         <td>${escapeHtml(s.tessera)}</td>
-        <td>${escapeHtml(s.nominativo)}</td>
+        <td${tdTitle(s.nominativo)}>${escapeHtml(s.nominativo)}</td>
         <td>${formatDataIt(s.dataNascita)}</td>
         <td>${escapeHtml(s.indirizzo)}</td>
-        <td>${escapeHtml(s.email)}</td>
-        <td>${escapeHtml(s.telefono)}</td>
+        <td${tdTitle(s.email)}>${escapeHtml(s.email)}</td>
+        <td${tdTitle(s.telefono)}>${escapeHtml(s.telefono)}</td>
         <td>${check(s.pagamentoBonifico)}</td>
         <td>${check(s.contanti)}</td>
         <td>${s.quota != null ? "€ " + Number(s.quota).toFixed(2) : ""}</td>
@@ -294,11 +301,11 @@ function renderStoricoAttivi() {
       return `<tr>
         <td>${idx + 1}</td>
         <td>${escapeHtml(s.tessera)}</td>
-        <td>${escapeHtml(s.nominativo)}</td>
+        <td${tdTitle(s.nominativo)}>${escapeHtml(s.nominativo)}</td>
         <td>${formatDataIt(s.dataNascita)}</td>
         <td>${escapeHtml(s.indirizzo)}</td>
-        <td>${escapeHtml(s.email)}</td>
-        <td>${escapeHtml(s.telefono)}</td>
+        <td${tdTitle(s.email)}>${escapeHtml(s.email)}</td>
+        <td${tdTitle(s.telefono)}>${escapeHtml(s.telefono)}</td>
         <td>${check(s.pagamentoBonifico)}</td>
         <td>${check(contantiEffettivo(s))}</td>
         <td>${s.quota != null ? "€ " + Number(s.quota).toFixed(2) : ""}</td>
