@@ -84,9 +84,7 @@ document.getElementById("tabBtnImpostazioni").addEventListener("click", () => sw
 // sempre ricalcolato dal vivo, non letto dal testo salvato.
 const PREFISSO_NOTA_DUPLICATO = /^Numero tessera duplicato nello storico: verificare(; )?/;
 
-// Mostra il testo completo al passaggio del mouse per i campi che, nelle
-// colonne a larghezza fissa, possono venire troncati con i puntini di
-// sospensione (vedi overflow:hidden in style.css).
+// Testo completo al passaggio del mouse sui campi descrittivi.
 function tdTitle(v) {
   return v ? ` title="${escapeAttr(v)}"` : "";
 }
@@ -204,7 +202,8 @@ function renderAttivi() {
   body.innerHTML = list
     .map((s, idx) => {
       const check = (v) => (v ? '<span class="check-yes">&check;</span>' : '<span class="check-no">—</span>');
-      return `<tr data-id="${s.id}">
+      const nonPagato = s.quota == null || !s.quotaPagata;
+      return `<tr data-id="${s.id}"${nonPagato ? ' class="row-non-pagato"' : ""}>
         <td>${idx + 1}</td>
         <td>${escapeHtml(s.tessera)}</td>
         <td${tdTitle(s.nominativo)}>${escapeHtml(s.nominativo)}</td>
@@ -815,7 +814,7 @@ document.getElementById("btnEstrazioneAssicurazione").addEventListener("click", 
     { label: "e-Mail", value: (s) => s.email, nowrap: true },
     { label: "Telefono", value: (s) => s.telefono, nowrap: true },
   ];
-  exportPdf(list, columns, `Estrazione per assicurazione ${state.meta.annoAttivo} - Gruppo Aeromodellistico Piave`);
+  exportPdf(list, columns, `Soci attivi ${state.meta.annoAttivo} - Gruppo Aeromodellistico Piave`);
 });
 
 // ===================== IMPOSTAZIONI: ANNO / LIMITE =====================
