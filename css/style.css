@@ -160,7 +160,7 @@ main{padding:18px 20px 60px;max-width:1600px;margin:0 auto;}
 }
 .data-table th{
   text-align:left;
-  padding:10px 12px;
+  padding:8px 8px;
   background:var(--blue-100);
   color:var(--blue-900);
   cursor:pointer;
@@ -173,21 +173,18 @@ main{padding:18px 20px 60px;max-width:1600px;margin:0 auto;}
 .data-table th.sorted-asc::after{content:" ▲";font-size:.7em;}
 .data-table th.sorted-desc::after{content:" ▼";font-size:.7em;}
 .data-table td{
-  padding:8px 12px;
+  padding:6px 8px;
   border-bottom:1px solid var(--gray-100);
   vertical-align:top;
   white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
 .data-table tbody tr:hover{background:var(--gray-50);}
 .data-table tbody tr.row-note{background:#fff8ea;}
 .data-table tbody tr.row-note:hover{background:#fff1d4;}
-/* .data-table td.col-actions (non solo .col-actions) per battere in
-   specificita' la regola generica ".data-table td" qui sopra: altrimenti
-   l'overflow:hidden di quella regola vince comunque e taglia i pulsanti
-   (es. "Rimuovi" che appare come "..."). */
-.data-table td.col-actions{white-space:nowrap;overflow:visible;text-overflow:clip;}
+/* Soci attivi senza quota segnata. */
+.data-table tbody tr.row-non-pagato{background:#fde8e8;}
+.data-table tbody tr.row-non-pagato:hover{background:#fbd5d5;}
+.col-actions{width:1%;}
 .col-actions .btn + .btn{margin-left:4px;}
 .row-note-icon{color:var(--amber-600);margin-right:4px;cursor:help;}
 .check-yes{color:var(--green-600);font-weight:700;}
@@ -201,51 +198,17 @@ main{padding:18px 20px 60px;max-width:1600px;margin:0 auto;}
   white-space:nowrap;
 }
 
-/* Colonne a larghezza fissa (percentuali che sommano a 100%): la tabella
-   riempie esattamente lo spazio disponibile, senza scorrimento orizzontale.
-   Il testo troppo lungo viene troncato con i puntini di sospensione (vedi
-   .data-table td) tranne che nell'Indirizzo, l'unico campo che puo' andare
-   a capo invece di troncare. */
-#tableStorico{table-layout:fixed;}
-#tableStorico th:nth-child(1),#tableStorico td:nth-child(1){width:5%;}
-#tableStorico th:nth-child(2),#tableStorico td:nth-child(2){width:12%;}
-#tableStorico th:nth-child(3),#tableStorico td:nth-child(3){width:3%;}
-#tableStorico th:nth-child(4),#tableStorico td:nth-child(4){width:6%;}
-#tableStorico th:nth-child(5),#tableStorico td:nth-child(5){width:7%;}
-#tableStorico th:nth-child(6),#tableStorico td:nth-child(6){width:21%;white-space:normal;overflow:visible;text-overflow:clip;}
-#tableStorico th:nth-child(7),#tableStorico td:nth-child(7){width:16%;}
-#tableStorico th:nth-child(8),#tableStorico td:nth-child(8){width:7%;}
-#tableStorico th:nth-child(9),#tableStorico td:nth-child(9){width:6%;}
-#tableStorico th:nth-child(10),#tableStorico td:nth-child(10){width:6%;}
-#tableStorico th:nth-child(11),#tableStorico td:nth-child(11){width:5%;}
-#tableStorico th:nth-child(12),#tableStorico td:nth-child(12){width:6%;}
-
-#tableAttivi{table-layout:fixed;}
-#tableAttivi th:nth-child(1),#tableAttivi td:nth-child(1){width:3%;}
-#tableAttivi th:nth-child(2),#tableAttivi td:nth-child(2){width:5%;}
-#tableAttivi th:nth-child(3),#tableAttivi td:nth-child(3){width:13%;}
-#tableAttivi th:nth-child(4),#tableAttivi td:nth-child(4){width:8%;}
-#tableAttivi th:nth-child(5),#tableAttivi td:nth-child(5){width:16%;white-space:normal;overflow:visible;text-overflow:clip;}
-#tableAttivi th:nth-child(6),#tableAttivi td:nth-child(6){width:13%;}
-#tableAttivi th:nth-child(7),#tableAttivi td:nth-child(7){width:9%;}
-#tableAttivi th:nth-child(8),#tableAttivi td:nth-child(8){width:5%;}
-#tableAttivi th:nth-child(9),#tableAttivi td:nth-child(9){width:5%;}
-#tableAttivi th:nth-child(10),#tableAttivi td:nth-child(10){width:6%;}
-#tableAttivi th:nth-child(11),#tableAttivi td:nth-child(11){width:5%;}
-#tableAttivi th:nth-child(12),#tableAttivi td:nth-child(12){width:12%;}
-
-#tableStoricoAttivi{table-layout:fixed;}
-#tableStoricoAttivi th:nth-child(1),#tableStoricoAttivi td:nth-child(1){width:3%;}
-#tableStoricoAttivi th:nth-child(2),#tableStoricoAttivi td:nth-child(2){width:5%;}
-#tableStoricoAttivi th:nth-child(3),#tableStoricoAttivi td:nth-child(3){width:15%;}
-#tableStoricoAttivi th:nth-child(4),#tableStoricoAttivi td:nth-child(4){width:8%;}
-#tableStoricoAttivi th:nth-child(5),#tableStoricoAttivi td:nth-child(5){width:20%;white-space:normal;overflow:visible;text-overflow:clip;}
-#tableStoricoAttivi th:nth-child(6),#tableStoricoAttivi td:nth-child(6){width:17%;}
-#tableStoricoAttivi th:nth-child(7),#tableStoricoAttivi td:nth-child(7){width:11%;}
-#tableStoricoAttivi th:nth-child(8),#tableStoricoAttivi td:nth-child(8){width:5%;}
-#tableStoricoAttivi th:nth-child(9),#tableStoricoAttivi td:nth-child(9){width:5%;}
-#tableStoricoAttivi th:nth-child(10),#tableStoricoAttivi td:nth-child(10){width:6%;}
-#tableStoricoAttivi th:nth-child(11),#tableStoricoAttivi td:nth-child(11){width:5%;}
+/* Le colonne si dimensionano sul contenuto e nessun valore viene troncato:
+   date, numeri, telefono, e-mail e importi restano sempre su una riga
+   intera; quando lo schermo e' stretto sono solo Socio, Luogo di nascita e
+   Indirizzo ad andare a capo per far stare la tabella senza scorrimento. */
+#tableStorico td:nth-child(2),#tableStorico td:nth-child(5),#tableStorico td:nth-child(6),
+#tableAttivi td:nth-child(3),#tableAttivi td:nth-child(5),
+#tableStoricoAttivi td:nth-child(3),#tableStoricoAttivi td:nth-child(5),
+.picker-table-wrap .data-table td:nth-child(2),.picker-table-wrap .data-table td:nth-child(3){
+  white-space:normal;
+  overflow-wrap:break-word;
+}
 
 .settings-grid{
   display:grid;
